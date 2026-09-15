@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMW M4 Gauge Cluster with G-Force Meter</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            width: 1024px;
+            height: 512px;
+            background-color: #000;
+            overflow: hidden;
+        }
+        @font-face {
+            font-family: 'AvionicWideHeavy';
+            src: url('local://local/vehicles/sdd_g82/Screen/AvionicWideHeavy-Regular.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        .mode-bar {
+            fill: #ff0000;
+            stroke: none;
+        }
+        .mode-bar-inactive {
+            fill: #333333;
+            stroke: none;
+        }
+        .g-force-container {
+            position: absolute;
+            top: 212px;
+            left: 110px;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background-color: rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+        }
+        .g-force-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .g-force-grid-line-h {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .g-force-grid-line-v {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 2px;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .g-force-marker {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            margin-left: -6px;
+            margin-top: -6px;
+            background-color: #fff;
+            border-radius: 50%;
+            z-index: 10;
+            top: 50%;
+            left: 50%;
+        }
+        #g-force-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .g-force-label {
+            position: absolute;
+            color: #fff;
+            font-size: 16px;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .g-force-label-x-pos {
+            right: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .g-force-label-x-neg {
+            left: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .g-force-label-y-pos {
+            top: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .g-force-label-y-neg {
+            bottom: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+    </style>
+</head>
+<body>
+    <svg width="1024" height="512" viewBox="0 0 1024 512" version="1.1" xml:space="preserve" id="svg16" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <defs id="defs16">
+            <linearGradient id="greyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#cccccc;stop-opacity:1" id="stop1" />
+                <stop offset="15%" style="stop-color:#999999;stop-opacity:1" id="stop2" />
+                <stop offset="30%" style="stop-color:#666666;stop-opacity:1" id="stop3" />
+                <stop offset="50%" style="stop-color:#444444;stop-opacity:1" id="stop4" />
+                <stop offset="70%" style="stop-color:#222222;stop-opacity:1" id="stop5" />
+                <stop offset="85%" style="stop-color:#111111;stop-opacity:1" id="stop6" />
+                <stop offset="100%" style="stop-color:#000000;stop-opacity:1" id="stop7" />
+            </linearGradient>
+            <linearGradient id="redToBlackGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" style="stop-color:#ff3333;stop-opacity:1" id="stop8" />
+                <stop offset="50%" style="stop-color:#cc0000;stop-opacity:1" id="stop9" />
+                <stop offset="100%" style="stop-color:#800000;stop-opacity:1" id="stop10" />
+            </linearGradient>
+            <linearGradient id="aboveRedFade" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" style="stop-color:#ff0000;stop-opacity:0.15" id="stop11" />
+                <stop offset="30%" style="stop-color:#cc0000;stop-opacity:0.1" id="stop12" />
+                <stop offset="60%" style="stop-color:#990000;stop-opacity:0.05" id="stop13" />
+                <stop offset="100%" style="stop-color:#550000;stop-opacity:0" id="stop14" />
+            </linearGradient>
+            <clipPath id="rightRpmClip">
+                <path d="m 669.01752,414.52296 26.846,1.75 6.4506,-11.51376 5.5314,-9.13474 9.42132,-17.14654 14.1414,-30.928928 11.7106,-27.903048 6.42668,-15.45406 2.91672,-17.418908 c 1.316,-20.70232 -7.61968,-35.111236 -14.24952,-46.942012 -18.66532,-33.307808 -42.74732,-55.432344 -55.90376,-69.366544 -3.73832,-3.959332 -7.00592,-8.318468 -13.18968,-8.347596 -5.02744,-0.0236 -8.83052,-0.623144 -13.3428,-0.570192 l 11.27364,18.67228 12.47728,19.61248 15.503,26.296096 11.838,23.418384 6.17356,15.514408 1.20708,12.551184 -0.1412,15.263324 -4.90784,21.344632 -17.93248,51.040164 z" id="path14" />
+            </clipPath>
+            <clipPath id="leftRpmClip">
+                <path d="m 351.49084,407.75516 -26.846,1.75 -6.4506,-11.51376 -5.5314,-9.134712 -9.42132,-17.14654 -14.1414,-30.928928 -11.7106,-27.903048 -6.42668,-15.45406 -2.91672,-17.418908 c -1.316,-20.70232 7.61968,-35.111236 14.24952,-46.942012 18.66532,-33.307808 42.74732,-55.432344 55.90376,-69.366544 3.73832,-3.959332 7.00592,-8.318468 13.18968,-8.347596 5.02744,-0.0236 8.83052,-0.623144 13.3428,-0.570192 l -11.27364,18.67228 -12.47728,19.61248 -15.503,26.296096 -11.838,23.418384 -6.17356,15.514408 -1.20708,12.551184 0.1412,15.263324 4.90784,21.344632 17.93248,51.040188 z" id="path15" />
+            </clipPath>
+            <filter id="brightRedGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="3" result="blur" id="feGaussianBlur15" />
+                <feComponentTransfer id="feComponentTransfer15">
+                    <feFuncR type="linear" slope="1.5" intercept="0" id="feFuncR15" />
+                    <feFuncG type="linear" slope="0.5" intercept="0" id="feFuncG15" />
+                    <feFuncB type="linear" slope="0.5" intercept="0" id="feFuncB15" />
+                </feComponentTransfer>
+                <feComposite in="SourceGraphic" in2="blur" operator="over" id="feComposite15" />
+            </filter>
+            <filter id="greyGlow" x="-10%" y="-10%" width="120%" height="120%">
+                <feGaussianBlur stdDeviation="1.6" result="blur" id="feGaussianBlur16" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" id="feComposite16" />
+            </filter>
+        </defs>
+        
+        <rect width="1024" height="512" fill="#000000" id="rect6" x="0" y="0" style="display:inline" />
+        
+        <path d="m 664.35872,410.33004 26.846,1.75 6.4506,-11.51376 5.5314,-9.134724 9.42132,-17.14654 14.1414,-30.928928 11.7106,-27.903048 6.42668,-15.45406 2.91672,-17.418908 c 1.316,-20.70232 -7.61968,-35.111236 -14.24952,-46.942012 -18.66532,-33.307808 -42.74732,-55.432344 -55.90376,-69.366544 -3.73832,-3.959332 -7.00592,-8.318468 -13.18968,-8.347596 -5.02744,-0.0236 -8.83052,-0.623144 -13.3428,-0.570192 l 11.27364,18.67228 12.47728,19.61248 15.503,26.296096 11.838,23.418384 6.17356,15.514408 1.20708,12.551184 -0.1412,15.263324 -4.90784,21.344632 -17.93248,51.040164 z"
+              stroke="#ffffff" stroke-width="2" fill="#000000" id="rightRpmOutline" />
+        <path d="m 355.217864,409.61868 -26.846,1.75 -6.4506,-11.513768 -5.5314,-9.134712 -9.42132,-17.14654 -14.1414,-30.928928 -11.7106,-27.903048 -6.42668,-15.45406 -2.91672,-17.418908 c -1.316,-20.70232 7.61968,-35.111236 14.24952,-46.942012 18.66532,-33.307808 42.74732,-55.432344 55.90376,-69.366544 3.73832,-3.959332 7.00592,-8.318468 13.18968,-8.347596 5.02744,-0.0236 8.83052,-0.623144 13.3428,-0.570192 l -11.27364,18.67228 -12.47728,19.61248 -15.503,26.296096 -11.838,23.418384 -6.17356,15.514408 -1.20708,12.551184 0.1412,15.263324 4.90784,21.344632 17.93248,51.040188 z"
+              stroke="#ffffff" stroke-width="2" fill="#000000" id="leftRpmOutline" />
+        
+        <rect id="rightGreyFill" x="660" y="420" width="160" height="0" fill="url(#greyGradient)" clip-path="url(#rightRpmClip)" filter="url(#greyGlow)" />
+        <rect id="leftGreyFill" x="200" y="420" width="160" height="0" fill="url(#greyGradient)" clip-path="url(#leftRpmClip)" filter="url(#greyGlow)" />
+        <rect id="rightRedBar" x="660" y="420" width="160" height="0" fill="url(#redToBlackGradient)" clip-path="url(#rightRpmClip)" filter="url(#brightRedGlow)" />
+        <rect id="leftRedBar" x="200" y="420" width="160" height="0" fill="url(#redToBlackGradient)" clip-path="url(#leftRpmClip)" filter="url(#brightRedGlow)" />
+        <rect id="rightRedFadeAbove" x="660" y="0" width="160" height="0" fill="url(#aboveRedFade)" clip-path="url(#rightRpmClip)" />
+        <rect id="leftRedFadeAbove" x="200" y="0" width="160" height="0" fill="url(#aboveRedFade)" clip-path="url(#leftRpmClip)" />
+        
+        <!-- Main Gauge Image -->
+        <image width="1092.63538" height="475.36042" preserveAspectRatio="none" xlink:href="bmw_m4_gauge_layer2.png" id="image1" x="-30.983482" y="53.3769" style="display:inline" />
+        
+        <!-- Left Turn Signal -->
+        <image id="leftTurnSignal" x="401.29938" y="173.59599" width="24" height="24" xlink:href="left_turn_signal.png" style="visibility:hidden" />
+        
+        <!-- Right Turn Signal -->
+        <image id="rightTurnSignal" x="594.50769" y="172.66425" width="24" height="24" xlink:href="right_turn_signal.png" style="visibility:hidden" />
+        
+        <!-- Headlights -->
+        <image id="headlights" x="16.451319" y="290.51865" width="24" height="24" xlink:href="headlights.png" style="visibility:hidden" />
+        
+        <!-- High Beams -->
+        <image id="highBeams" x="16.160145" y="253.24841" width="24" height="24" xlink:href="highbeams.png" style="visibility:hidden" />
+        
+        <!-- Check Engine Light -->
+        <image id="checkEngine" x="998.95544" y="291.41766" width="24" height="24" xlink:href="check_engine.png" style="visibility:hidden" />
+        
+        <!-- Speed Limit Background Image -->
+        <image id="speedLimitBackground" x="390.02911" y="380.46588" width="40" height="40" xlink:href="speedlimit.png" style="display:inline" />
+        
+        <!-- Speed Limit Display -->
+        <text id="speedLimitDisplay" x="429.8298" y="387.08871" fill="#000000" font-size="14.6568px" font-weight="normal" text-anchor="middle" style="font-family:'AvionicWideHeavy';stroke:#ffffff;stroke-width:0;stroke-dasharray:none" transform="scale(0.95277312,1.0495678)">N/A</text>
+        
+        <text id="gearDisplaySingle" x="510" y="296" fill="#ffffff" font-size="80.1444px" font-weight="normal" text-anchor="middle" style="font-family:'AvionicWideHeavy';stroke:#ffffff;stroke-width:0.0;stroke-dasharray:none" />
+        <g id="specialGearGroup" transform="translate(550, 296)" style="visibility:hidden">
+            <text id="gearDisplayLetter" x="-30" y="0" fill="#ffffff" font-size="80.1444px" font-weight="normal" text-anchor="end" style="font-family:'AvionicWideHeavy';stroke:#ffffff;stroke-width:0.0;stroke-dasharray:none" />
+            <text id="gearDisplayNumber" x="10" y="0" fill="#ffffff" font-size="40px" font-weight="normal" text-anchor="start" style="font-family:'AvionicWideHeavy';stroke:#ffffff;stroke-width:0.0;stroke-dasharray:none" />
+        </g>
+        <text id="speedDisplay" x="512" y="366.522276" fill="#ffffff" font-size="40px" font-weight="normal" text-anchor="middle" style="font-family:'AvionicWideHeavy';stroke:#ffffff;stroke-width:0.0;stroke-dasharray:none">0</text>
+        <text id="speedUnit" x="615.3946" y="321.05072" fill="#aaaaaa" font-size="13.7678px" text-anchor="middle" transform="scale(0.94661356,1.0563973)" style="stroke-width:1.37678">km/h</text>
+        <text x="864.4237" y="432.62536" fill="#aaaaaa" font-size="13.7678px" text-anchor="middle" transform="scale(0.94661356,1.0563973)" style="font-size:18.66666px;stroke-width:1.37678" id="text18"><tspan style="font-size:18.66666px;fill:#ffffff;fill-opacity:1;font-family:'AvionicWideHeavy'" id="tspan18">+20.5</tspan></text>
+        <text x="696.5998" y="436.59446" fill="#aaaaaa" font-size="13.7678px" text-anchor="middle" transform="scale(0.94661356,1.0563973)" style="font-size:13.33334px;stroke-width:1.37678" id="text19"><tspan style="font-size:13.33334px;fill:#ffffff;fill-opacity:1;font-family:'AvionicWideHeavy'" id="tspan19">4WD</tspan></text>
+        <text x="245.29604" y="430.42034" fill="#aaaaaa" font-size="13.7678px" text-anchor="middle" transform="scale(0.94661356,1.0563973)" style="font-size:18.66666px;stroke-width:1.37678" id="text17"><tspan style="font-size:18.66666px;fill:#ffffff;fill-opacity:1;font-family:'AvionicWideHeavy'" id="tspan17">4:11 PM</tspan></text>
+        
+        <!-- Mode Panels (Right Side) -->
+        <g id="modePanels" transform="matrix(1.2329372,0,0,0.84754593,611.11123,242.84084)">
+            <g id="engineMode">
+                <image id="engineIcon" x="121.47042" y="-16.592529" width="24" height="24" xlink:href="m4_gaugemodes_engine.png" />
+                <text id="engineModeText" x="159.14424" y="-4.2051826" fill="#ffffff" font-size="14.961px" text-anchor="start" style="font-family:sans-serif;stroke-width:1.87013" transform="scale(0.93506434,1.0694451)">COMFORT</text>
+                <rect id="engine-bar1" x="150" y="0" width="30" height="6" rx="2" ry="2" class="mode-bar-inactive" />
+                <rect id="engine-bar2" x="190" y="0" width="30" height="6" rx="2" ry="2" class="mode-bar-inactive" />
+                <rect id="engine-bar3" x="230" y="0" width="30" height="6" rx="2" ry="2" class="mode-bar-inactive" />
+            </g>
+            <g id="suspensionMode" transform="translate(0,34)">
+                <image id="suspensionIcon" x="121.47042" y="-17.904682" width="24" height="24" xlink:href="m4_gaugemodes_suspension.png" />
+                <text id="suspensionModeText" x="160.09377" y="-3.5781" fill="#ffffff" font-size="14.9043px" text-anchor="start" style="font-family:sans-serif;stroke-width:1.86304" transform="scale(0.93152127,1.0735128)">COMFORT</text>
+                <rect id="suspension-bar1" x="150" y="0" width="30" height="6" rx="2" ry="2" class="mode-bar-inactive" />
+                <rect id="suspension-bar2" x="190" y="0" width="30" height="6" rx="2" ry="2" class="mode-bar-inactive" />
+                <rect id="suspension-bar3" x="230" y="0" width="30" height="6" rx="2" ry="2" class="mode-bar-inactive" />
+            </g>
+            <g id="steeringMode" transform="translate(0,68)">
+                <image id="steeringIcon" x="122.09335" y="-17.904682" width="24" height="24" xlink:href="m4_gaugemodes_steering.png" />
+                <text id="steeringModeText" x="162.68866" y="-3.550725" fill="#ffffff" font-size="14.7903px" text-anchor="start" style="font-family:sans-serif;stroke-width:1.84879" transform="scale(0.92439443,1.0817893)">COMFORT</text>
+                <rect id="steering-bar1" x="150" y="0" width="30" height="6" rx="2" ry="2" class="mode-bar-inactive" />
+                <rect id="steering-bar2" x="190" y="0" width="30" height="6" rx="2" ry="2" class="mode-bar-inactive" />
+            </g>
+            <g id="brakeMode" transform="translate(0,102)">
+                <image id="brakeIcon" x="122.71627" y="-18.560757" width="24" height="24" xlink:href="m4_gaugemodes_brakes.png" />
+                <text id="brakeModeText" x="162.68866" y="-4.1571975" fill="#ffffff" font-size="14.7903px" text-anchor="start" style="font-family:sans-serif;stroke-width:1.84879" transform="scale(0.92439443,1.0817893)">COMFORT</text>
+                <rect id="brake-bar1" x="150" y="0" width="30" height="6" rx="2" ry="2" class="mode-bar-inactive" />
+                <rect id="brake-bar2" x="190" y="0" width="30" height="6" rx="2" ry="2" class="mode-bar-inactive" />
+            </g>
+        </g>
+    </svg>
+
+    <!-- G-Force Meter -->
+    <div class="g-force-container">
+        <canvas id="g-force-canvas" width="140" height="140"></canvas>
+        <div class="g-force-grid">
+            <div class="g-force-grid-line-h"></div>
+            <div class="g-force-grid-line-v"></div>
+        </div>
+        <div class="g-force-marker" id="g-force-marker"></div>
+        <div class="g-force-label g-force-label-x-pos" id="g-x-pos">0</div>
+        <div class="g-force-label g-force-label-x-neg" id="g-x-neg">0</div>
+        <div class="g-force-label g-force-label-y-pos" id="g-y-pos">0</div>
+        <div class="g-force-label g-force-label-y-neg" id="g-y-neg">0</div>
+    </div>
+
+    <script>
+        let unit = "metric"; // Default to metric, like ESBR
+
+        const leftGreyFill = document.getElementById('leftGreyFill');
+        const rightGreyFill = document.getElementById('rightGreyFill');
+        const leftRedBar = document.getElementById('leftRedBar');
+        const rightRedBar = document.getElementById('rightRedBar');
+        const leftRedFadeAbove = document.getElementById('leftRedFadeAbove');
+        const rightRedFadeAbove = document.getElementById('rightRedFadeAbove');
+        const gearDisplayLetter = document.getElementById('gearDisplayLetter');
+        const gearDisplayNumber = document.getElementById('gearDisplayNumber');
+        const gearDisplaySingle = document.getElementById('gearDisplaySingle');
+        const specialGearGroup = document.getElementById('specialGearGroup');
+        const speedDisplay = document.getElementById('speedDisplay');
+        const speedUnit = document.getElementById('speedUnit');
+        const speedLimitDisplay = document.getElementById('speedLimitDisplay');
+        const timeDisplay = document.getElementById('text17').querySelector('tspan');
+        const tempDisplay = document.getElementById('text18').querySelector('tspan');
+        const transferCaseDisplay = document.getElementById('text19').querySelector('tspan');
+        
+        // Indicator elements
+        const leftTurnSignal = document.getElementById('leftTurnSignal');
+        const rightTurnSignal = document.getElementById('rightTurnSignal');
+        const headlights = document.getElementById('headlights');
+        const highBeams = document.getElementById('highBeams');
+        const checkEngine = document.getElementById('checkEngine');
+        
+        const modes = {
+            engine: { element: document.getElementById('engineModeText'), bars: [document.getElementById('engine-bar1'), document.getElementById('engine-bar2'), document.getElementById('engine-bar3')], maxLevel: 3 },
+            suspension: { element: document.getElementById('suspensionModeText'), bars: [document.getElementById('suspension-bar1'), document.getElementById('suspension-bar2'), document.getElementById('suspension-bar3')], maxLevel: 3 },
+            steering: { element: document.getElementById('steeringModeText'), bars: [document.getElementById('steering-bar1'), document.getElementById('steering-bar2')], maxLevel: 2 },
+            brake: { element: document.getElementById('brakeModeText'), bars: [document.getElementById('brake-bar1'), document.getElementById('brake-bar2')], maxLevel: 2 }
+        };
+        
+        const maxRpmHeight = 240;
+        const fadeHeight = 50;
+        const MODE_NAMES = { comfort: 'COMFORT', ttSport: 'SPORT', 'ttSport+': 'SPORT+' };
+        const MODE_LEVELS = { comfort: 1, ttSport: 2, 'ttSport+': 3 };
+
+        function updateRpmGauges(percentage) {
+            const height = (percentage / 100) * maxRpmHeight;
+            const greyHeight = height - 12;
+            leftGreyFill.setAttribute('height', greyHeight > 0 ? greyHeight : 0);
+            leftGreyFill.setAttribute('y', 420 - height > 0 ? 420 - height + 12 : 420);
+            rightGreyFill.setAttribute('height', greyHeight > 0 ? greyHeight : 0);
+            rightGreyFill.setAttribute('y', 420 - height > 0 ? 420 - height + 12 : 420);
+            const redHeight = 12;
+            const redY = 420 - height > 0 ? 420 - height : 420;
+            leftRedBar.setAttribute('height', redHeight);
+            leftRedBar.setAttribute('y', redY);
+            rightRedBar.setAttribute('height', redHeight);
+            rightRedBar.setAttribute('y', redY);
+            const fadeY = (420 - height) - fadeHeight;
+            leftRedFadeAbove.setAttribute('height', fadeHeight);
+            leftRedFadeAbove.setAttribute('y', fadeY);
+            rightRedFadeAbove.setAttribute('height', fadeHeight);
+            rightRedFadeAbove.setAttribute('y', fadeY);
+        }
+
+        function updateGear(gear) {
+            if (typeof gear === 'string' && gear.length === 2) {
+                const letter = gear.charAt(0);
+                const number = gear.charAt(1);
+                if ((letter === 'S' || letter === 'M') && !isNaN(number)) {
+                    specialGearGroup.style.visibility = 'visible';
+                    gearDisplaySingle.textContent = '';
+                    gearDisplayLetter.textContent = letter;
+                    gearDisplayNumber.textContent = number;
+                    gearDisplayLetter.setAttribute('x', letter === 'M' ? '4' : '4');
+                    return;
+                }
+            }
+            let displayText;
+            if (gear === 0) displayText = 'N';
+            else if (gear === -1) displayText = 'R';
+            else if (gear === -2) displayText = 'P';
+            else displayText = gear.toString();
+            specialGearGroup.style.visibility = 'hidden';
+            gearDisplaySingle.textContent = displayText;
+        }
+
+        function updateSpeed(speed) {
+            const speedValue = Math.round(unit === "metric" ? speed * 3.6 : speed * 2.23694); // km/h or mph
+            speedDisplay.textContent = speedValue;
+            speedUnit.textContent = unit === "metric" ? 'km/h' : 'mph';
+        }
+
+        function updateSpeedLimit(speedLimit) {
+            if (speedLimit == null || speedLimit <= 0) {
+                speedLimitDisplay.textContent = 'N/A';
+            } else {
+                const speedLimitValue = Math.round(unit === "metric" ? speedLimit : speedLimit * 0.621371); // km/h to mph if imperial
+                speedLimitDisplay.textContent = speedLimitValue;
+            }
+        }
+        
+        function updateMode(system, modeName) {
+            let level = MODE_LEVELS[modeName] || 1;
+            let displayName = MODE_NAMES[modeName] || 'COMFORT';
+            level = Math.min(level, modes[system].maxLevel);
+            modes[system].element.textContent = displayName;
+            modes[system].bars.forEach(bar => bar.setAttribute('class', 'mode-bar-inactive'));
+            for (let i = 0; i < level; i++) {
+                if (modes[system].bars[i]) modes[system].bars[i].setAttribute('class', 'mode-bar');
+            }
+        }
+
+        function updateTime() {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+            timeDisplay.textContent = `${hours}:${minutes} ${ampm}`;
+        }
+
+        function updateOutsideTemp(temp) {
+            tempDisplay.textContent = temp >= 0 ? `+${temp.toFixed(1)}` : temp.toFixed(1);
+        }
+
+        function updateTransferCase(state) {
+            transferCaseDisplay.textContent = state === 1 ? '2WD' : '4WD';
+        }
+
+        function updateIndicators(data) {
+            leftTurnSignal.style.visibility = data.signal_L === 1 ? 'visible' : 'hidden';
+            rightTurnSignal.style.visibility = data.signal_R === 1 ? 'visible' : 'hidden';
+            headlights.style.visibility = data.lights_state > 0 ? 'visible' : 'hidden';
+            highBeams.style.visibility = data.highbeam === 1 ? 'visible' : 'hidden';
+            checkEngine.style.visibility = data.checkengine === 1 ? 'visible' : 'hidden';
+        }
+
+        const gForceMarker = document.getElementById('g-force-marker');
+        const gXPos = document.getElementById('g-x-pos');
+        const gXNeg = document.getElementById('g-x-neg');
+        const gYPos = document.getElementById('g-y-pos');
+        const gYNeg = document.getElementById('g-y-neg');
+        const gForceCanvas = document.getElementById('g-force-canvas');
+        const ctx = gForceCanvas.getContext('2d');
+        
+        const canvasSize = 140;
+        const centerX = canvasSize / 2;
+        const centerY = canvasSize / 2;
+        const maxGForce = 1.5;
+        const trailMaxAge = 1000;
+        const trailPoints = [];
+        let lastGForceX = 0;
+        let lastGForceY = 0;
+        
+        function updateGForceMeter(gForceX, gForceY) {
+            gForceX = Math.max(Math.min(gForceX, maxGForce), -maxGForce);
+            gForceY = Math.max(Math.min(gForceY, maxGForce), -maxGForce);
+            const scale = (canvasSize / 2) / maxGForce;
+            const markerX = centerX + (gForceX * scale);
+            const markerY = centerY - (gForceY * scale);
+            gForceMarker.style.left = `${markerX}px`;
+            gForceMarker.style.top = `${markerY}px`;
+            const roundedGX = Math.abs(gForceX).toFixed(1);
+            const roundedGY = Math.abs(gForceY).toFixed(1);
+            gXPos.textContent = gForceX > 0 ? roundedGX : '0';
+            gXNeg.textContent = gForceX < 0 ? roundedGX : '0';
+            gYPos.textContent = gForceY > 0 ? roundedGY : '0';
+            gYNeg.textContent = gForceY < 0 ? roundedGY : '0';
+            const now = Date.now();
+            trailPoints.push({
+                x: markerX,
+                y: markerY,
+                timestamp: now,
+                prevX: lastGForceX === 0 ? markerX : centerX + (lastGForceX * scale),
+                prevY: lastGForceY === 0 ? markerY : centerY - (lastGForceY * scale)
+            });
+            lastGForceX = gForceX;
+            lastGForceY = gForceY;
+            while (trailPoints.length > 0 && now - trailPoints[0].timestamp > trailMaxAge) {
+                trailPoints.shift();
+            }
+            drawTrails();
+        }
+        
+        function drawTrails() {
+            ctx.clearRect(0, 0, canvasSize, canvasSize);
+            const now = Date.now();
+            for (let i = 0; i < trailPoints.length; i++) {
+                const point = trailPoints[i];
+                const age = now - point.timestamp;
+                const opacity = 1 - (age / trailMaxAge);
+                ctx.beginPath();
+                ctx.moveTo(point.x, point.y);
+                ctx.lineTo(point.prevX, point.prevY);
+                ctx.lineTo(centerX, centerY);
+                ctx.closePath();
+                ctx.fillStyle = `rgba(255, 0, 0, ${opacity * 0.3})`;
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(point.x, point.y);
+                ctx.lineTo(point.prevX, point.prevY);
+                ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.7})`;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+
+        window.updateWithBeamNGData = function(data) {
+            if (!data) return;
+            const rpmPercentage = Math.min((data.rpm / 8000) * 100, 100);
+            updateRpmGauges(rpmPercentage);
+            updateGear(data.gear);
+            updateSpeed(data.wheelspeed);
+            if (data.speedLimit !== undefined) updateSpeedLimit(data.speedLimit);
+            if (data.engineMode) updateMode('engine', data.engineMode);
+            if (data.suspensionMode) updateMode('suspension', data.suspensionMode);
+            if (data.steeringMode) updateMode('steering', data.steeringMode);
+            if (data.brakeMode) updateMode('brake', data.brakeMode);
+            if (data.transfercase_state !== undefined) updateTransferCase(data.transfercase_state);
+            if (data.accelerationData) {
+                const gForceX = data.accelerationData.xSmooth / 9.81;
+                const gForceY = data.accelerationData.ySmooth / 9.81;
+                updateGForceMeter(gForceX, gForceY);
+            }
+            if (data.outsideTemp !== undefined) updateOutsideTemp(data.outsideTemp);
+            updateIndicators({
+                signal_L: data.signal_L || 0,
+                signal_R: data.signal_R || 0,
+                lights_state: data.lights_state || 0,
+                highbeam: data.highbeam || 0,
+                checkengine: data.checkengine || 0
+            });
+        };
+
+        window.setup = function(data) {
+            unit = data.uiUnitLength || 'metric'; // Default to metric if undefined
+            speedUnit.textContent = unit === "metric" ? "km/h" : "mph";
+            if (data.wheelspeed) {
+                updateSpeed(data.wheelspeed);
+            }
+        };
+
+        // Initialize
+        updateRpmGauges(0);
+        updateGear(-2);
+        updateSpeed(0);
+        updateSpeedLimit(null);
+        updateMode('engine', 'comfort');
+        updateMode('suspension', 'comfort');
+        updateMode('steering', 'comfort');
+        updateMode('brake', 'comfort');
+        updateOutsideTemp(20.5);
+        updateTransferCase(0.33);
+        updateTime();
+        setInterval(updateTime, 1000);
+    </script>
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'927429e68e35dd1e',t:'MTc0MzEzMzgzMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+</body>
+</html>

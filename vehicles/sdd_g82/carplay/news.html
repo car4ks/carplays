@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        /* Hide scrollbars */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        * { scrollbar-width: none; -ms-overflow-style: none; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000; color: white; overflow: hidden; 
+            width: 100%; height: 100vh; 
+            position: relative; display: flex; flex-direction: column;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .news-screen {
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            border-radius: 0 40px 40px 0;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .app-header {
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 40px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0 40px 0 0;
+            position: relative;
+        }
+
+        .app-header-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: white;
+        }
+
+        /* Category Pills Section */
+        .news-categories-section {
+            padding: 30px 40px 25px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .news-categories-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 900px;
+            margin: 0 auto;
+            gap: 15px;
+        }
+
+        .news-category-pill {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 12px;
+        }
+
+        .news-category-pill:hover {
+            transform: scale(1.05);
+        }
+
+        .news-category-pill.selected {
+            transform: scale(1.1);
+        }
+
+        .category-icon {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            color: white;
+            margin-bottom: 10px;
+            border: 3px solid transparent;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.08) 100%);
+            backdrop-filter: blur(12px);
+        }
+
+        .news-category-pill.selected .category-icon {
+            border-color: #007AFF;
+            box-shadow: 0 0 20px rgba(0, 122, 255, 0.5);
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.3) 0%, rgba(0, 122, 255, 0.15) 100%);
+        }
+
+        .category-name {
+            font-size: 17px;
+            font-weight: 500;
+            color: white;
+            text-align: center;
+        }
+
+        .app-content {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Articles List Section */
+        .news-articles-section {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .news-articles {
+            padding: 25px 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .news-article {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 32px 36px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 110px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .news-article.selected {
+            border-color: #007AFF;
+            background: rgba(0, 122, 255, 0.15);
+            transform: scale(1.02);
+        }
+
+        .news-article.highlighted {
+            border-color: #007AFF;
+            background: rgba(0, 122, 255, 0.25);
+            transform: scale(1.04);
+            box-shadow: 0 8px 25px rgba(0, 122, 255, 0.4);
+        }
+
+        .news-article-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .news-article-category {
+            font-size: 17px;
+            font-weight: 700;
+            color: #007AFF;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .news-article-time {
+            font-size: 19px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+        }
+
+        .news-article-headline {
+            font-size: 26px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+
+        .news-article-summary {
+            font-size: 22px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.3;
+            margin-bottom: 12px;
+        }
+
+        .news-article-source {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+        }
+
+        /* Detail View */
+        .news-detail-view {
+            display: none;
+            padding: 40px;
+            flex-direction: column;
+            height: 100%;
+            backdrop-filter: blur(30px);
+        }
+
+        .news-detail-view.active {
+            display: flex;
+            animation: slideInFromRight 0.4s ease-out;
+        }
+
+        @keyframes slideInFromRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto 40px;
+        }
+
+        .detail-back-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 30px;
+            padding: 16px 30px;
+            color: white;
+            font-size: 22px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .detail-back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .detail-back-btn.selected {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.05);
+        }
+
+        .detail-spacer {
+            width: 140px;
+        }
+
+        .detail-article-title {
+            font-size: 40px;
+            font-weight: 700;
+            color: white;
+            text-align: center;
+            flex: 1;
+            padding: 0 20px;
+        }
+
+        .detail-content {
+            flex: 1;
+            overflow-y: auto;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .detail-article {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            border-radius: 28px;
+            padding: 45px 50px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .detail-meta {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 30px;
+            font-size: 20px;
+        }
+
+        .detail-category-badge {
+            background: rgba(0, 122, 255, 0.2);
+            color: #007AFF;
+            padding: 8px 20px;
+            border-radius: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 16px;
+        }
+
+        .detail-time {
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+        }
+
+        .detail-headline {
+            font-size: 38px;
+            font-weight: 700;
+            color: white;
+            line-height: 1.3;
+            margin-bottom: 25px;
+        }
+
+        .detail-source {
+            font-size: 21px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+            margin-bottom: 30px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .detail-body {
+            font-size: 24px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .detail-body p {
+            margin-bottom: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="news-screen">
+        <div class="app-header">
+            <div class="app-header-title">News</div>
+        </div>
+        
+        <div class="app-content">
+            <!-- Categories Section -->
+            <div class="news-categories-section">
+                <div class="news-categories-row">
+                    <div class="news-category-pill selected" data-category="0" onclick="selectCategory(0)">
+                        <div class="category-icon">🚗</div>
+                        <div class="category-name">Auto</div>
+                    </div>
+                    <div class="news-category-pill" data-category="1" onclick="selectCategory(1)">
+                        <div class="category-icon">🏙️</div>
+                        <div class="category-name">Local</div>
+                    </div>
+                    <div class="news-category-pill" data-category="2" onclick="selectCategory(2)">
+                        <div class="category-icon">🏁</div>
+                        <div class="category-name">Racing</div>
+                    </div>
+                    <div class="news-category-pill" data-category="3" onclick="selectCategory(3)">
+                        <div class="category-icon">💻</div>
+                        <div class="category-name">Tech</div>
+                    </div>
+                    <div class="news-category-pill" data-category="4" onclick="selectCategory(4)">
+                        <div class="category-icon">💰</div>
+                        <div class="category-name">Economy</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Articles List Section -->
+            <div class="news-articles-section">
+                <div class="news-articles" id="newsArticles"></div>
+            </div>
+
+            <!-- Detail View -->
+            <div class="news-detail-view" id="newsDetailView">
+                <div class="detail-header">
+                    <button class="detail-back-btn selected" id="detailBackBtn" onclick="closeArticle()">
+                        ← Back
+                    </button>
+                    <div class="detail-article-title" id="detailArticleTitle"></div>
+                    <div class="detail-spacer"></div>
+                </div>
+                <div class="detail-content">
+                    <div class="detail-article" id="detailArticle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let newsState = {
+            selectedArticleIndex: 0,
+            selectedCategoryIndex: 0,
+            inArticleView: false
+        };
+
+        const categories = ['Automotive', 'Local', 'Racing', 'Technology', 'Economy'];
+
+        const articlesData = [
+            // Automotive (0)
+            [
+                {
+                    headline: "ETK Unveils Next-Generation 800-Series Lineup",
+                    summary: "The German manufacturer announced significant improvements in safety and performance for their flagship sedan range, featuring new driver assistance systems.",
+                    source: "BeamNG Automotive News",
+                    time: "2 hours ago",
+                    body: "ETK has officially unveiled its highly anticipated next-generation 800-Series lineup at the International Auto Show. The new models feature groundbreaking advancements in driver assistance technology, including enhanced autonomous driving capabilities and predictive collision avoidance systems.\n\nThe flagship 800i model boasts a powerful turbocharged inline-six engine producing over 400 horsepower, while maintaining impressive fuel efficiency through advanced hybrid technology. Interior refinements include a new 14-inch curved display, premium Nappa leather seating, and an upgraded sound system.\n\nETK's Chief Engineer stated that the new 800-Series represents the culmination of five years of research and development, with a focus on blending performance, luxury, and cutting-edge safety features. The vehicles are expected to hit dealerships in Q3 of this year."
+                },
+                {
+                    headline: "Cherrier Factory Expansion Creates 500 New Jobs",
+                    summary: "The French automaker breaks ground on a new production facility dedicated to electric vehicle manufacturing, boosting the local economy.",
+                    source: "Industrial Weekly",
+                    time: "4 hours ago",
+                    body: "Cherrier Motors has officially broken ground on a state-of-the-art manufacturing facility that will focus exclusively on electric vehicle production. The $800 million investment is expected to create over 500 high-skilled jobs in the region.\n\nThe new facility will span 2 million square feet and feature fully automated assembly lines, advanced battery manufacturing capabilities, and sustainable energy systems including on-site solar power generation. Production is scheduled to begin in late 2026.\n\nLocal officials praised the investment as a major economic boost for the community. The facility will manufacture Cherrier's upcoming all-electric lineup, including the highly anticipated Vivace EV and a new electric crossover model."
+                },
+                {
+                    headline: "Ibishu Announces Recall for Popular Pessima Model",
+                    summary: "Software update addresses potential transmission control issues affecting approximately 45,000 vehicles manufactured between 2022-2024.",
+                    source: "Consumer Safety Alert",
+                    time: "1 day ago",
+                    body: "Ibishu has issued a voluntary recall for approximately 45,000 Pessima vehicles due to a software issue affecting transmission control systems. The recall affects models manufactured between June 2022 and March 2024.\n\nAccording to company officials, the issue relates to transmission control module software that may, in rare circumstances, cause unexpected gear shifts. No accidents or injuries have been reported in connection with this issue.\n\nOwners of affected vehicles will be notified by mail and can schedule a free software update at any authorized Ibishu dealership. The update takes approximately 30 minutes to complete and requires no physical parts replacement."
+                }
+            ],
+            // Local (1)
+            [
+                {
+                    headline: "Downtown Bridge Renovation Project Begins Next Month",
+                    summary: "Major infrastructure improvements planned for aging bridge system, expected to improve traffic flow and safety.",
+                    source: "City Planning Commission",
+                    time: "3 hours ago",
+                    body: "The city has announced that the long-awaited downtown bridge renovation project will commence next month. The $45 million project will modernize the aging infrastructure and improve traffic capacity.\n\nConstruction is expected to last 18 months, with significant traffic diversions planned during peak renovation periods. City engineers have developed alternate routing plans to minimize disruption to daily commuters.\n\nThe renovated bridges will feature wider lanes, improved pedestrian walkways, LED lighting systems, and enhanced structural reinforcement to meet modern safety standards. The project is part of a larger citywide infrastructure improvement initiative."
+                },
+                {
+                    headline: "New Technology Park Opens, Bringing 2,000 Jobs",
+                    summary: "State-of-the-art business campus attracts major tech companies and startups to the area.",
+                    source: "Economic Development Board",
+                    time: "5 hours ago",
+                    body: "A cutting-edge technology park has officially opened its doors, bringing an estimated 2,000 new jobs to the region. The 200-acre campus features modern office buildings, collaborative workspaces, and green spaces.\n\nSeveral major technology companies have already committed to establishing regional headquarters at the park, attracted by tax incentives and the area's growing reputation as a tech hub.\n\nThe development includes restaurants, fitness facilities, and recreational areas designed to create a vibrant work environment. Additional phases of the project are planned for the coming years."
+                }
+            ],
+            // Racing (2)
+            [
+                {
+                    headline: "Gavril Off-Road Championship Draws Record Crowds",
+                    summary: "This weekend's racing event in the Utah desert attracted over 50,000 spectators, making it the most attended off-road competition in years.",
+                    source: "Racing Times",
+                    time: "6 hours ago",
+                    body: "The annual Gavril Off-Road Championship shattered attendance records this weekend, with over 50,000 fans converging on the Utah desert for three days of intense competition.\n\nDrivers from 15 countries competed across multiple categories, including trophy trucks, buggies, and modified production vehicles. The event featured a grueling 300-mile course through challenging desert terrain.\n\nFan-favorite driver Marcus Chen took top honors in the unlimited class, completing the course in record time despite challenging weather conditions. Organizers announced plans to expand the event next year."
+                },
+                {
+                    headline: "ETK Returns to Professional Racing After 10-Year Hiatus",
+                    summary: "German manufacturer announces ambitious motorsports program spanning multiple racing series.",
+                    source: "Motorsport Insider",
+                    time: "12 hours ago",
+                    body: "ETK has announced its return to professional motorsports with a comprehensive racing program spanning multiple series. The German manufacturer last competed at the professional level over a decade ago.\n\nThe new program includes entries in endurance racing, touring car championships, and a customer racing initiative. ETK will field factory-backed teams with experienced drivers and cutting-edge race-prepared vehicles.\n\nThe announcement signals ETK's confidence in its latest performance technology and represents a major commitment to motorsports. The company aims to use racing as a development platform for road car innovations."
+                }
+            ],
+            // Technology (3)
+            [
+                {
+                    headline: "Breakthrough in Solid-State Battery Technology",
+                    summary: "Research consortium announces major advancement in electric vehicle battery technology with significantly improved energy density.",
+                    source: "Tech Innovation Journal",
+                    time: "8 hours ago",
+                    body: "A research consortium has announced a breakthrough in solid-state battery technology that could revolutionize electric vehicles. The new battery chemistry promises energy densities triple that of current lithium-ion batteries.\n\nThe technology could enable electric vehicles with ranges exceeding 1,000 miles on a single charge while reducing charging times to under 15 minutes. Commercial production is targeted for 2028.\n\nMajor automakers have expressed strong interest in the technology, with several already committing to development partnerships. The advancement represents years of research into solid electrolyte materials and novel cell architectures."
+                },
+                {
+                    headline: "Autonomous Delivery Vehicles Begin Urban Testing",
+                    summary: "Self-driving delivery robots roll out in pilot program across three major cities.",
+                    source: "Future Transport Weekly",
+                    time: "1 day ago",
+                    body: "Autonomous delivery vehicles have begun real-world testing in three major metropolitan areas as part of a comprehensive pilot program. The small, self-driving robots can navigate sidewalks and crosswalks to deliver packages directly to customers.\n\nEach vehicle uses advanced sensors and AI to safely navigate urban environments, avoiding pedestrians and obstacles. Initial testing focuses on daytime deliveries in designated zones.\n\nThe technology could significantly reduce delivery costs and carbon emissions while providing faster service. Expansion to additional cities is planned for later this year."
+                }
+            ],
+            // Economy (4)
+            [
+                {
+                    headline: "Automation Industry Reports Strong Q4 Growth",
+                    summary: "Manufacturing efficiency improvements and new automation technologies drove significant revenue increases across multiple sectors last quarter.",
+                    source: "Business Today",
+                    time: "8 hours ago",
+                    body: "The automation industry posted impressive fourth-quarter growth, with major manufacturers reporting revenue increases of 15-25% year-over-year. The surge is attributed to increased demand for manufacturing efficiency solutions.\n\nNew technologies including advanced robotics, AI-powered quality control systems, and predictive maintenance solutions are driving adoption across industries. Companies are investing heavily to modernize production facilities.\n\nIndustry analysts predict continued growth as businesses seek to improve productivity and address labor shortages through automation solutions."
+                },
+                {
+                    headline: "Automotive Parts Exports Reach All-Time High",
+                    summary: "Domestic manufacturers benefit from strong international demand for high-quality automotive components.",
+                    source: "Trade Statistics Bureau",
+                    time: "1 day ago",
+                    body: "Automotive parts exports reached record levels last year, driven by strong international demand for high-quality components. Total export value exceeded $12 billion, up 18% from the previous year.\n\nKey growth markets include Europe, Asia, and South America, where domestic manufacturers have established strong reputations for quality and reliability. Advanced powertrain components and electronic systems led export categories.\n\nIndustry leaders credit investments in advanced manufacturing technology and quality control systems for the competitive advantage in global markets."
+                }
+            ]
+        ];
+
+        function selectCategory(categoryIndex) {
+            newsState.selectedCategoryIndex = categoryIndex;
+            newsState.selectedArticleIndex = 0;
+            updateCategorySelection();
+            renderArticles();
+        }
+
+        function updateCategorySelection() {
+            document.querySelectorAll('.news-category-pill').forEach((pill, index) => {
+                pill.classList.toggle('selected', index === newsState.selectedCategoryIndex);
+            });
+        }
+
+        function renderArticles() {
+            const container = document.getElementById('newsArticles');
+            const articles = articlesData[newsState.selectedCategoryIndex];
+            
+            container.innerHTML = articles.map((article, index) => `
+                <div class="news-article ${index === newsState.selectedArticleIndex ? 'selected' : ''}" data-index="${index}">
+                    <div class="news-article-header">
+                        <div class="news-article-category">${categories[newsState.selectedCategoryIndex]}</div>
+                        <div class="news-article-time">${article.time}</div>
+                    </div>
+                    <div class="news-article-headline">${article.headline}</div>
+                    <div class="news-article-summary">${article.summary}</div>
+                    <div class="news-article-source">${article.source}</div>
+                </div>
+            `).join('');
+            
+            const selectedArticle = container.children[newsState.selectedArticleIndex];
+            if (selectedArticle) {
+                selectedArticle.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }
+        }
+
+        function openArticle() {
+            const articles = articlesData[newsState.selectedCategoryIndex];
+            const article = articles[newsState.selectedArticleIndex];
+            if (!article) return;
+            
+            newsState.inArticleView = true;
+            
+            document.getElementById('detailArticleTitle').textContent = categories[newsState.selectedCategoryIndex];
+            
+            const bodyParagraphs = article.body.split('\n\n').map(p => `<p>${p}</p>`).join('');
+            
+            document.getElementById('detailArticle').innerHTML = `
+                <div class="detail-meta">
+                    <div class="detail-category-badge">${categories[newsState.selectedCategoryIndex]}</div>
+                    <div class="detail-time">${article.time}</div>
+                </div>
+                <div class="detail-headline">${article.headline}</div>
+                <div class="detail-source">${article.source}</div>
+                <div class="detail-body">${bodyParagraphs}</div>
+            `;
+            
+            document.querySelector('.news-categories-section').style.display = 'none';
+            document.querySelector('.news-articles-section').style.display = 'none';
+            document.getElementById('newsDetailView').classList.add('active');
+            
+            console.log('News: Opened article:', article.headline);
+        }
+
+        function closeArticle() {
+            newsState.inArticleView = false;
+            document.getElementById('newsDetailView').classList.remove('active');
+            document.querySelector('.news-categories-section').style.display = 'block';
+            document.querySelector('.news-articles-section').style.display = 'block';
+            renderArticles();
+            console.log('News: Closed article view');
+        }
+
+        function handleNavigation(direction) {
+            console.log('News: Handling navigation:', direction, newsState);
+            
+            if (newsState.inArticleView) {
+                if (direction === 'back' || direction === 'select') {
+                    closeArticle();
+                }
+            } else {
+                const articles = articlesData[newsState.selectedCategoryIndex];
+                
+                if (direction === 'left') {
+                    if (newsState.selectedCategoryIndex > 0) {
+                        selectCategory(newsState.selectedCategoryIndex - 1);
+                    }
+                } else if (direction === 'right') {
+                    if (newsState.selectedCategoryIndex < 4) {
+                        selectCategory(newsState.selectedCategoryIndex + 1);
+                    }
+                } else if (direction === 'up') {
+                    if (newsState.selectedArticleIndex > 0) {
+                        newsState.selectedArticleIndex--;
+                        renderArticles();
+                    }
+                } else if (direction === 'down') {
+                    if (newsState.selectedArticleIndex < articles.length - 1) {
+                        newsState.selectedArticleIndex++;
+                        renderArticles();
+                    }
+                } else if (direction === 'select') {
+                    openArticle();
+                } else if (direction === 'back') {
+                    window.parent.postMessage({ type: 'exitToHome' }, '*');
+                }
+            }
+        }
+
+        function applyWallpaper(wallpaperNum) {
+            if (!wallpaperNum) wallpaperNum = 1;
+            const wallpaperPath = `/vehicles/sdd_g82/carplay/screen_background_${wallpaperNum}.png`;
+            document.body.style.setProperty('background-image', `url('${wallpaperPath}')`, 'important');
+            console.log('News: Applied wallpaper', wallpaperNum);
+        }
+
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'updateAppData') {
+                newsState = { ...newsState, ...event.data.data };
+                if (!newsState.inArticleView) {
+                    renderArticles();
+                    updateCategorySelection();
+                }
+            } else if (event.data.type === 'navigation') {
+                handleNavigation(event.data.direction);
+            } else if (event.data.type === 'updateBackground') {
+                if (event.data.wallpaper) {
+                    applyWallpaper(event.data.wallpaper);
+                }
+            }
+        });
+
+        renderArticles();
+        updateCategorySelection();
+        applyWallpaper(1);
+        console.log('News: Initialized with matching CarPlay theme');
+    </script>
+</body>
+</html>

@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audiobooks</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        /* Hide scrollbars */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        * { scrollbar-width: none; -ms-overflow-style: none; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000; color: white; overflow: hidden; 
+            width: 100%; height: 100vh; 
+            position: relative; display: flex; flex-direction: column;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .audiobooks-screen {
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            border-radius: 0 40px 40px 0;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .app-header {
+            height: 90px; /* Increased from 70px */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 50px; /* Increased from 40px */
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(25px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0 40px 0 0;
+            position: relative;
+        }
+
+        .app-header-title {
+            font-size: 36px; /* Increased from 28px */
+            font-weight: 700;
+            color: white;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 25px; /* Increased from 20px */
+        }
+
+        .header-btn {
+            padding: 12px 24px; /* Increased from 8px 16px */
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px; /* Increased from 20px */
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 18px; /* Increased from 14px */
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .header-btn.selected {
+            background: rgba(0, 122, 255, 0.4);
+            border-color: #007AFF;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .app-content {
+            flex: 1;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Continue Reading Section */
+        .reading-section {
+            padding: 40px; /* Increased from 30px */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px; /* Increased from 24px */
+        }
+
+        .section-title {
+            font-size: 36px; /* Increased from 28px */
+            font-weight: 600;
+            color: white;
+        }
+
+        .section-chevron {
+            font-size: 32px; /* Increased from 24px */
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .section-chevron:hover {
+            color: #007AFF;
+            transform: translateX(4px);
+        }
+
+        .reading-books {
+            display: flex;
+            gap: 32px; /* Increased from 24px */
+            overflow-x: auto;
+            padding-bottom: 15px; /* Increased from 10px */
+        }
+
+        .reading-book {
+            min-width: 180px; /* Increased from 140px */
+            width: 180px;
+            height: 260px; /* Increased from 200px */
+            border-radius: 20px; /* Increased from 16px */
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent; /* Increased from 2px */
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .reading-book:hover {
+            transform: scale(1.05);
+        }
+
+        .reading-book.selected {
+            border-color: #007AFF;
+            transform: scale(1.08);
+            box-shadow: 0 4px 20px rgba(0, 122, 255, 0.4);
+        }
+
+        .reading-book.highlighted {
+            border-color: #007AFF;
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(0, 122, 255, 0.6);
+        }
+
+        .reading-artwork {
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px; /* Increased from 48px */
+            color: white;
+        }
+
+        /* Recently Added Section */
+        .recent-section {
+            padding: 40px; /* Increased from 30px */
+        }
+
+        .recent-books {
+            display: flex;
+            gap: 28px; /* Increased from 20px */
+            overflow-x: auto;
+            padding-bottom: 15px; /* Increased from 10px */
+        }
+
+        .recent-book {
+            min-width: 160px; /* Increased from 120px */
+            width: 160px;
+            height: 220px; /* Increased from 160px */
+            border-radius: 16px; /* Increased from 12px */
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent; /* Increased from 2px */
+            overflow: hidden;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .recent-book:hover {
+            transform: scale(1.05);
+        }
+
+        .recent-book.selected {
+            border-color: #007AFF;
+            transform: scale(1.08);
+            box-shadow: 0 4px 20px rgba(0, 122, 255, 0.4);
+        }
+
+        .recent-book.highlighted {
+            border-color: #007AFF;
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(0, 122, 255, 0.6);
+        }
+
+        .recent-artwork {
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 56px; /* Increased from 40px */
+            color: white;
+        }
+
+        .progress-bar {
+            position: absolute;
+            bottom: 12px; /* Increased from 8px */
+            left: 12px; /* Increased from 8px */
+            right: 12px; /* Increased from 8px */
+            height: 6px; /* Increased from 4px */
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px; /* Increased from 2px */
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #007AFF;
+            border-radius: 3px; /* Increased from 2px */
+            transition: width 0.3s ease;
+        }
+
+        /* Book colors for variety */
+        .book-fiction { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .book-scifi { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .book-business { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .book-mystery { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .book-biography { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+        .book-history { background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%); }
+        .book-selfhelp { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
+        .book-romance { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    </style>
+</head>
+<body>
+    <div class="audiobooks-screen">
+        <div class="app-header">
+            <div class="app-header-title">Books</div>
+            <div class="header-controls">
+                <div class="header-btn">Reading Now</div>
+                <div class="header-btn selected">Library</div>
+                <div class="header-btn">Store</div>
+            </div>
+        </div>
+        
+        <div class="app-content">
+            <!-- Continue Reading Section -->
+            <div class="reading-section">
+                <div class="section-header">
+                    <div class="section-title">Continue Reading</div>
+                    <div class="section-chevron">❯</div>
+                </div>
+                <div class="reading-books">
+                    <div class="reading-book selected book-selfhelp">
+                        <div class="reading-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/book_covers/atomic_habits.png');"></div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 65%;"></div>
+                        </div>
+                    </div>
+                    <div class="reading-book book-romance">
+                        <div class="reading-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/book_covers/seven_husbands_evelyn_hugo.png');"></div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 23%;"></div>
+                        </div>
+                    </div>
+                    <div class="reading-book book-fiction">
+                        <div class="reading-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/book_covers/where_crawdads_sing.png');"></div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 42%;"></div>
+                        </div>
+                    </div>
+                    <div class="reading-book book-fiction">
+                        <div class="reading-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/book_covers/midnight_library.png');"></div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 88%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recently Added Section -->
+            <div class="recent-section">
+                <div class="section-header">
+                    <div class="section-title">Recently Added</div>
+                    <div class="section-chevron">❯</div>
+                </div>
+                <div class="recent-books">
+                    <div class="recent-book book-romance">
+                        <div class="recent-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/book_covers/fourth_wing.png');"></div>
+                    </div>
+                    <div class="recent-book book-romance">
+                        <div class="recent-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/book_covers/it_ends_with_us.png');"></div>
+                    </div>
+                    <div class="recent-book book-mystery">
+                        <div class="recent-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/book_covers/the_housemaid.png');"></div>
+                    </div>
+                    <div class="recent-book book-fiction">
+                        <div class="recent-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/book_covers/lessons_in_chemistry.png');"></div>
+                    </div>
+                    <div class="recent-book book-mystery">
+                        <div class="recent-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/book_covers/silent_patient.png');"></div>
+                    </div>
+                    <div class="recent-book book-biography">
+                        <div class="recent-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/book_covers/educated.png');"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let audiobooksState = {
+            selectedReadingIndex: 0,
+            selectedRecentIndex: 0,
+            inReadingView: true, // true = continue reading, false = recently added
+            selectedHeaderIndex: 1, // 0=reading now, 1=library, 2=store
+            currentView: 'main'
+        };
+
+        function updateAudiobooksUI() {
+            console.log('Audiobooks: Updating UI - inReadingView:', audiobooksState.inReadingView, 
+                       'readingIndex:', audiobooksState.selectedReadingIndex, 
+                       'recentIndex:', audiobooksState.selectedRecentIndex);
+            
+            if (audiobooksState.currentView === 'main') {
+                // Update continue reading selection
+                const readingBooks = document.querySelectorAll('.reading-book');
+                readingBooks.forEach((book, index) => {
+                    const isSelected = index === audiobooksState.selectedReadingIndex && audiobooksState.inReadingView;
+                    book.classList.toggle('selected', isSelected);
+                    book.classList.toggle('highlighted', isSelected);
+                });
+
+                // Update recently added selection
+                const recentBooks = document.querySelectorAll('.recent-book');
+                recentBooks.forEach((book, index) => {
+                    const isSelected = index === audiobooksState.selectedRecentIndex && !audiobooksState.inReadingView;
+                    book.classList.toggle('selected', isSelected);
+                    book.classList.toggle('highlighted', isSelected);
+                });
+
+                // Update header controls
+                const headerBtns = document.querySelectorAll('.header-btn');
+                headerBtns.forEach((btn, index) => {
+                    btn.classList.toggle('selected', index === audiobooksState.selectedHeaderIndex);
+                });
+
+                // Auto-scroll selected book into view
+                if (audiobooksState.inReadingView) {
+                    const selectedReading = readingBooks[audiobooksState.selectedReadingIndex];
+                    if (selectedReading) {
+                        selectedReading.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'nearest',
+                            inline: 'center'
+                        });
+                    }
+                } else {
+                    const selectedRecent = recentBooks[audiobooksState.selectedRecentIndex];
+                    if (selectedRecent) {
+                        selectedRecent.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'nearest',
+                            inline: 'center'
+                        });
+                    }
+                }
+            }
+        }
+
+        function applyWallpaper(wallpaperNum) {
+            if (!wallpaperNum) wallpaperNum = 1;
+            const wallpaperPath = `/vehicles/sdd_g82/carplay/screen_background_${wallpaperNum}.png`;
+            document.body.style.setProperty('background-image', `url('${wallpaperPath}')`, 'important');
+            console.log('Audiobooks: Applied wallpaper', wallpaperNum);
+        }
+
+        function handleNavigation(direction) {
+            console.log('Audiobooks: Handling navigation:', direction, audiobooksState);
+            
+            if (direction === 'left') {
+                if (audiobooksState.inReadingView) {
+                    // Navigate through continue reading books
+                    audiobooksState.selectedReadingIndex = Math.max(0, audiobooksState.selectedReadingIndex - 1);
+                    console.log('Audiobooks: LEFT - reading index now:', audiobooksState.selectedReadingIndex);
+                } else {
+                    // Navigate through recently added books
+                    audiobooksState.selectedRecentIndex = Math.max(0, audiobooksState.selectedRecentIndex - 1);
+                    console.log('Audiobooks: LEFT - recent index now:', audiobooksState.selectedRecentIndex);
+                }
+            } else if (direction === 'right') {
+                if (audiobooksState.inReadingView) {
+                    // Navigate through continue reading books
+                    const readingBooks = document.querySelectorAll('.reading-book');
+                    const newIndex = Math.min(readingBooks.length - 1, audiobooksState.selectedReadingIndex + 1);
+                    if (newIndex === audiobooksState.selectedReadingIndex) {
+                        // Already at rightmost, ignore navigation
+                        console.log('Audiobooks: RIGHT - already at rightmost reading book, ignoring');
+                        return;
+                    }
+                    audiobooksState.selectedReadingIndex = newIndex;
+                    console.log('Audiobooks: RIGHT - reading index now:', audiobooksState.selectedReadingIndex);
+                } else {
+                    // Navigate through recently added books
+                    const recentBooks = document.querySelectorAll('.recent-book');
+                    const newIndex = Math.min(recentBooks.length - 1, audiobooksState.selectedRecentIndex + 1);
+                    if (newIndex === audiobooksState.selectedRecentIndex) {
+                        // Already at rightmost, ignore navigation
+                        console.log('Audiobooks: RIGHT - already at rightmost recent book, ignoring');
+                        return;
+                    }
+                    audiobooksState.selectedRecentIndex = newIndex;
+                    console.log('Audiobooks: RIGHT - recent index now:', audiobooksState.selectedRecentIndex);
+                }
+            } else if (direction === 'up') {
+                if (!audiobooksState.inReadingView) {
+                    // Switch from recently added to continue reading
+                    audiobooksState.inReadingView = true;
+                    audiobooksState.selectedReadingIndex = 0;
+                    console.log('Audiobooks: UP - switched to reading view');
+                } else {
+                    console.log('Audiobooks: UP - already in reading view');
+                }
+            } else if (direction === 'down') {
+                if (audiobooksState.inReadingView) {
+                    // Switch from continue reading to recently added
+                    audiobooksState.inReadingView = false;
+                    audiobooksState.selectedRecentIndex = 0;
+                    console.log('Audiobooks: DOWN - switched to recent view');
+                } else {
+                    console.log('Audiobooks: DOWN - already in recent view');
+                }
+            } else if (direction === 'select') {
+                if (audiobooksState.inReadingView) {
+                    console.log('Audiobooks: Selected continue reading book', audiobooksState.selectedReadingIndex);
+                    // Could resume audiobook playback
+                } else {
+                    console.log('Audiobooks: Selected recently added book', audiobooksState.selectedRecentIndex);
+                    // Could start new audiobook
+                }
+            } else if (direction === 'back') {
+                // Exit to home
+                console.log('Audiobooks: Sending exit to home signal');
+                window.parent.postMessage({ type: 'exitToHome' }, '*');
+                return;
+            }
+
+            updateAudiobooksUI();
+        }
+
+        // Listen for messages from parent
+        window.addEventListener('message', function(event) {
+            console.log('Audiobooks: Received message:', event.data);
+            
+            if (event.data.type === 'updateAppData') {
+                audiobooksState = { ...audiobooksState, ...event.data.data };
+                updateAudiobooksUI();
+                console.log('Audiobooks: Updated app data:', audiobooksState);
+            } else if (event.data.type === 'navigation') {
+                console.log('Audiobooks: Received navigation event:', event.data.direction);
+                handleNavigation(event.data.direction);
+            } else if (event.data.type === 'updateBackground') {
+                if (event.data.wallpaper) {
+                    applyWallpaper(event.data.wallpaper);
+                }
+            }
+        });
+
+        // Initialize
+        updateAudiobooksUI();
+        applyWallpaper(1);
+        console.log('Audiobooks: iOS-style audiobooks app initialized and ready for navigation');
+    </script>
+</body>
+</html>

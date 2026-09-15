@@ -1,0 +1,19 @@
+<!-- Save as screen_background.svg -->
+<svg width="256" height="128" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background -->
+    <rect width="256" height="128" fill="rgb(5, 5, 5)"/>
+
+    <!-- Sidebar (30px wide, full height) -->
+    <rect x="0" y="0" width="30" height="128" fill="rgba(10, 10, 10, 0.95)"/>
+
+    <!-- Top Status Bar (left: 30px, right: 0, height: 16px) -->
+    <rect x="30" y="0" width="226" height="16" fill="rgb(5, 5, 5)"/>
+
+    <!-- Main Content Area (page: 226px wide, 112px tall, margin-left: 30px, margin-top: 16px) -->
+    <rect x="30" y="16" width="226" height="112" fill="transparent" stroke="white" stroke-width="1"/>
+
+    <!-- Placeholder for malfunction.png (adjust x, y, width, height as needed) -->
+    <rect x="100" y="50" width="48" height="48" fill="none" stroke="red" stroke-width="2" stroke-dasharray="4 4">
+        <title>Place malfunction.png here</title>
+    </rect>
+</svg>

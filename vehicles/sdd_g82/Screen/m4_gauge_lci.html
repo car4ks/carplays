@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom BeamNG Gauge Cluster</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            width: 1024px;
+            height: 512px;
+            background-color: #000;
+            overflow: hidden;
+            position: relative;
+        }
+        @font-face {
+            font-family: 'AvionicWideHeavy';
+            src: url('local://local/vehicles/sdd_g82/Screen/AvionicWideHeavy-Regular.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        #speed-text {
+            position: absolute;
+            color: #ffffff;
+            font-size: 40px;
+            font-family: 'AvionicWideHeavy';
+            text-align: center;
+            width: 100px;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+        #gear-container {
+            position: absolute;
+            color: #ffffff;
+            font-family: 'AvionicWideHeavy';
+            text-align: center;
+            width: 100px;
+            transform: translateX(50%);
+            z-index: 10;
+        }
+        #gear-single {
+            font-size: 60px;
+        }
+        #gear-special {
+            display: none;
+        }
+        #gear-letter {
+            font-size: 60px;
+            margin-right: 5px;
+        }
+        #gear-number {
+            font-size: 30px;
+        }
+    </style>
+</head>
+<body>
+    <svg width="1024" height="512" viewBox="0 0 1024 512" version="1.1" id="svg1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <!-- Background Image -->
+        <image id="background-image" width="1024" height="512" x="0" y="0" xlink:href="sdd_g82_gauge_bottom_LCI.png" preserveAspectRatio="none" />
+
+        <!-- Speed Gauge (Left) -->
+        <rect id="speed-container" x="96.798416" y="85.302505" width="147.56425" height="297.94824" fill="none" />
+        <rect id="speed-fill" x="96.793259" y="370.69356" width="147.57457" height="0" fill="#0369e7" />
+        <line id="speed-needle" x1="96.820747" y1="370.66605" x2="243.87444" y2="370.66605" stroke="#ffffff" stroke-width="2.42531" />
+
+        <!-- RPM Gauge (Right) -->
+        <rect id="rpm-container" x="743.71698" y="120.19559" width="154.18204" height="263.10291" fill="none" />
+        <rect id="rpm-fill" x="743.79041" y="371.12862" width="154.03519" height="0" fill="#a50514" />
+        <line id="rpm-needle" x1="743.32117" y1="371.36487" x2="898.99359" y2="371.36487" stroke="#ffffff" stroke-width="2.49537" />
+
+        <!-- Foreground Image -->
+        <image id="foreground-image" width="1024" height="512" x="0" y="0" xlink:href="sdd_g82_gauge_top_LCI.png" preserveAspectRatio="none" style="display:inline" />
+    </svg>
+
+    <!-- Speed Text -->
+    <div id="speed-text">0</div>
+
+    <!-- Gear Indicator -->
+    <div id="gear-container">
+        <div id="gear-single"></div>
+        <div id="gear-special">
+            <span id="gear-letter"></span><span id="gear-number"></span>
+        </div>
+    </div>
+
+    <script>
+        const speedFill = document.getElementById('speed-fill');
+        const speedNeedle = document.getElementById('speed-needle');
+        const speedText = document.getElementById('speed-text');
+        const rpmFill = document.getElementById('rpm-fill');
+        const rpmNeedle = document.getElementById('rpm-needle');
+        const gearContainer = document.getElementById('gear-container');
+        const gearSingle = document.getElementById('gear-single');
+        const gearSpecial = document.getElementById('gear-special');
+        const gearLetter = document.getElementById('gear-letter');
+        const gearNumber = document.getElementById('gear-number');
+
+        const speedContainerY = 75.297348;
+        const speedContainerHeight = 295.39621;
+        const rpmContainerY = 120.19559;
+        const rpmContainerHeight = 263.10291;
+        const maxSpeed = 300; // km/h for gauge fill
+        const maxRpm = 7300;
+
+        // Adjustable positions (in pixels)
+        const speedLeft = 220;  // Middle left
+        const speedTop = 200;   // Middle vertically
+        const gearRight = 260;  // Middle right
+        const gearTop = 190;    // Middle vertically
+
+        // Apply initial positions
+        speedText.style.left = `${speedLeft}px`;
+        speedText.style.top = `${speedTop}px`;
+        gearContainer.style.right = `${gearRight}px`;
+        gearContainer.style.top = `${gearTop}px`;
+
+        function updateSpeed(speed) {
+            const speedValueKmh = Math.min(speed * 3.6, maxSpeed); // m/s to km/h
+            const percentage = (speedValueKmh / maxSpeed) * 100;
+            const height = (percentage / 100) * speedContainerHeight;
+            const yPos = speedContainerY + speedContainerHeight - height;
+
+            speedFill.setAttribute('y', yPos);
+            speedFill.setAttribute('height', height);
+            speedNeedle.setAttribute('y1', yPos);
+            speedNeedle.setAttribute('y2', yPos);
+
+            const speedValueMph = Math.round(speed * 2.23694); // m/s to mph
+            speedText.textContent = speedValueMph;
+        }
+
+        function updateRpm(rpm) {
+            const percentage = Math.min((rpm / maxRpm) * 100, 100);
+            const height = (percentage / 100) * rpmContainerHeight;
+            const yPos = rpmContainerY + rpmContainerHeight - height;
+
+            rpmFill.setAttribute('y', yPos);
+            rpmFill.setAttribute('height', height);
+            rpmNeedle.setAttribute('y1', yPos);
+            rpmNeedle.setAttribute('y2', yPos);
+        }
+
+        function updateGear(gear) {
+            if (typeof gear === 'string' && gear.length === 2) {
+                const letter = gear.charAt(0);
+                const number = gear.charAt(1);
+                if ((letter === 'S' || letter === 'M') && !isNaN(number)) {
+                    gearSpecial.style.display = 'inline';
+                    gearSingle.textContent = '';
+                    gearLetter.textContent = letter;
+                    gearNumber.textContent = number;
+                    return;
+                }
+            }
+            let displayText;
+            if (gear === 0) displayText = 'N';
+            else if (gear === -1) displayText = 'R';
+            else if (gear === -2) displayText = 'P';
+            else displayText = gear.toString();
+            gearSpecial.style.display = 'none';
+            gearSingle.textContent = displayText;
+        }
+
+        window.updateWithBeamNGData = function(data) {
+            if (!data) return;
+            updateSpeed(data.wheelspeed || 0);
+            updateRpm(data.rpm || 0);
+            updateGear(data.gear || -2); // Default to 'P'
+        };
+
+        // Initial state
+        updateSpeed(0);
+        updateRpm(0);
+        updateGear(-2); // Start in Park
+    </script>
+</body>
+</html>

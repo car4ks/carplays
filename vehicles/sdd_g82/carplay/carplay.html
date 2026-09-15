@@ -1,0 +1,2422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apple CarPlay</title>
+    <script src="/ui/lib/ext/hu.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000; color: white; overflow: hidden; width: 1680px; height: 720px; 
+            position: relative; display: flex; align-items: center; justify-content: center;
+        }
+
+        /* Boot Screen */
+        .boot-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .boot-screen.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .boot-screen.fade-out {
+            opacity: 0;
+        }
+
+        .boot-logo {
+            max-width: 280px;
+            max-height: 280px;
+            animation: bootPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes bootPulse {
+            0%, 100% { 
+                opacity: 0.8;
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 1;
+                transform: scale(1.05);
+            }
+        }
+
+        .carplay-frame {
+            width: 1640px; height: 680px; background: #000; border-radius: 40px; 
+            position: relative; overflow: hidden; display: flex;
+            background-size: cover; background-position: center; background-repeat: no-repeat;
+            transition: all 0.8s ease;
+        }
+
+        /* Apple Intelligence Screen Edge Glow */
+        .screen-edge-glow-top {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100px;
+            background: linear-gradient(to right, 
+                rgba(255, 107, 157, 0.6) 0%, 
+                rgba(198, 91, 207, 0.6) 25%, 
+                rgba(138, 80, 226, 0.6) 50%, 
+                rgba(79, 159, 255, 0.6) 75%, 
+                rgba(45, 212, 191, 0.6) 100%
+            );
+            mask-image: linear-gradient(to bottom, 
+                rgba(0,0,0,0.8) 0%, 
+                rgba(0,0,0,0.5) 20%,
+                rgba(0,0,0,0.2) 50%,
+                transparent 100%
+            );
+            -webkit-mask-image: linear-gradient(to bottom, 
+                rgba(0,0,0,0.8) 0%, 
+                rgba(0,0,0,0.5) 20%,
+                rgba(0,0,0,0.2) 50%,
+                transparent 100%
+            );
+            border-radius: 40px 40px 0 0;
+            filter: blur(12px);
+            pointer-events: none;
+            z-index: 10001;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .screen-edge-glow-top.active {
+            animation: screenEdgePulse 2s ease-in-out infinite;
+        }
+
+        .screen-edge-glow-bottom {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 100px;
+            background: linear-gradient(to right, 
+                rgba(163, 230, 53, 0.6) 0%, 
+                rgba(253, 224, 71, 0.6) 33%, 
+                rgba(251, 146, 60, 0.6) 66%, 
+                rgba(255, 107, 157, 0.6) 100%
+            );
+            mask-image: linear-gradient(to top, 
+                rgba(0,0,0,0.8) 0%, 
+                rgba(0,0,0,0.5) 20%,
+                rgba(0,0,0,0.2) 50%,
+                transparent 100%
+            );
+            -webkit-mask-image: linear-gradient(to top, 
+                rgba(0,0,0,0.8) 0%, 
+                rgba(0,0,0,0.5) 20%,
+                rgba(0,0,0,0.2) 50%,
+                transparent 100%
+            );
+            border-radius: 0 0 40px 40px;
+            filter: blur(12px);
+            pointer-events: none;
+            z-index: 10001;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .screen-edge-glow-bottom.active {
+            animation: screenEdgePulse 2s ease-in-out infinite;
+        }
+
+        .screen-edge-glow-left {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 100px;
+            background: linear-gradient(to bottom, 
+                rgba(255, 107, 157, 0.6) 0%, 
+                rgba(138, 80, 226, 0.6) 25%, 
+                rgba(45, 212, 191, 0.6) 50%, 
+                rgba(163, 230, 53, 0.6) 75%, 
+                rgba(251, 146, 60, 0.6) 100%
+            );
+            mask-image: linear-gradient(to right, 
+                rgba(0,0,0,0.8) 0%, 
+                rgba(0,0,0,0.5) 20%,
+                rgba(0,0,0,0.2) 50%,
+                transparent 100%
+            );
+            -webkit-mask-image: linear-gradient(to right, 
+                rgba(0,0,0,0.8) 0%, 
+                rgba(0,0,0,0.5) 20%,
+                rgba(0,0,0,0.2) 50%,
+                transparent 100%
+            );
+            border-radius: 40px 0 0 40px;
+            filter: blur(12px);
+            pointer-events: none;
+            z-index: 10001;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .screen-edge-glow-left.active {
+            animation: screenEdgePulse 2s ease-in-out infinite;
+        }
+
+        .screen-edge-glow-right {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 100px;
+            background: linear-gradient(to bottom, 
+                rgba(79, 159, 255, 0.6) 0%, 
+                rgba(45, 212, 191, 0.6) 33%, 
+                rgba(253, 224, 71, 0.6) 66%, 
+                rgba(255, 107, 157, 0.6) 100%
+            );
+            mask-image: linear-gradient(to left, 
+                rgba(0,0,0,0.8) 0%, 
+                rgba(0,0,0,0.5) 20%,
+                rgba(0,0,0,0.2) 50%,
+                transparent 100%
+            );
+            -webkit-mask-image: linear-gradient(to left, 
+                rgba(0,0,0,0.8) 0%, 
+                rgba(0,0,0,0.5) 20%,
+                rgba(0,0,0,0.2) 50%,
+                transparent 100%
+            );
+            border-radius: 0 40px 40px 0;
+            filter: blur(12px);
+            pointer-events: none;
+            z-index: 10001;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .screen-edge-glow-right.active {
+            animation: screenEdgePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes screenEdgePulse {
+            0%, 100% {
+                opacity: 0.5;
+            }
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        .screen-edge-glow-top.active,
+        .screen-edge-glow-bottom.active,
+        .screen-edge-glow-left.active,
+        .screen-edge-glow-right.active {
+            opacity: 1;
+        }
+
+        .normal-layout {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            z-index: 3;
+            transition: opacity 0.3s ease;
+        }
+
+        .normal-layout.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Maps Sidebar - copy of sidebar for maps fullscreen */
+        .maps-sidebar {
+            width: 90px;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.03) 100%);
+            backdrop-filter: blur(30px) saturate(180%);
+            border-radius: 40px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 25px 0;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                        0 8px 32px rgba(0, 0, 0, 0.15);
+            z-index: 200;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .maps-sidebar.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .sidebar {
+            width: 90px; height: 100%; 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.03) 100%);
+            backdrop-filter: blur(30px) saturate(180%);
+            border-radius: 40px;
+            position: relative;
+            display: flex; flex-direction: column; align-items: center; padding: 25px 0;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                        0 8px 32px rgba(0, 0, 0, 0.15);
+            margin: 0;
+            overflow: hidden;
+            z-index: 15;
+        }
+
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.45) 20%, rgba(255, 255, 255, 0.45) 80%, transparent 100%);
+            border-radius: 40px 40px 0 0;
+        }
+
+        .sidebar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 1px;
+            background: linear-gradient(0deg, transparent 0%, rgba(255, 255, 255, 0.3) 20%, rgba(255, 255, 255, 0.3) 80%, transparent 100%);
+            border-radius: 0 40px 40px 0;
+        }
+
+        .sidebar-time {
+            font-size: 20px; font-weight: 600; color: white; margin-bottom: 8px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .signal-indicator {
+            display: flex; align-items: center; gap: 4px; margin-bottom: 40px;
+        }
+
+        .signal-bars {
+            display: flex; gap: 2px; align-items: flex-end; height: 18px;
+        }
+
+        .signal-text {
+            font-size: 12px; color: rgba(255,255,255,0.85); margin-left: 8px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .signal-bar {
+            width: 3px; border-radius: 1px; background: rgba(255,255,255,0.85);
+        }
+        .signal-bar:nth-child(1) { height: 6px; }
+        .signal-bar:nth-child(2) { height: 10px; }
+        .signal-bar:nth-child(3) { height: 14px; }
+        .signal-bar:nth-child(4) { height: 18px; }
+
+        .recent-apps {
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+            align-items: center;
+            margin-top: 110px;
+        }
+
+        .recent-app-placeholder {
+            width: 60px; height: 60px; border-radius: 16px; 
+            background: transparent;
+            border: 2px dashed rgba(255, 255, 255, 0.25);
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s ease;
+            opacity: 0.4;
+        }
+
+        .recent-app {
+            width: 60px; height: 60px; border-radius: 16px; 
+            background: rgba(255, 255, 255, 0.18); backdrop-filter: blur(12px);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s ease;
+            background-size: 40px 40px; background-repeat: no-repeat; background-position: center;
+            opacity: 1;
+            transform: translateY(0);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .recent-app:hover { 
+            transform: scale(1.1); 
+            background: rgba(255, 255, 255, 0.25); 
+        }
+
+        .main-area {
+            flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
+            z-index: 10;
+            transition: all 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .fullscreen-layout {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .fullscreen-layout.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .app-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 0 40px 40px 0;
+            display: none;
+        }
+
+        .app-iframe.active {
+            display: block;
+        }
+
+        .app-iframe.fullscreen {
+            border-radius: 40px;
+        }
+
+        .home-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            padding: 40px 80px;
+            transition: all 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .home-screen.active {
+            display: flex;
+        }
+
+        .home-screen.hidden {
+            display: none;
+        }
+
+        .apps-grid {
+            display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(2, auto);
+            column-gap: 80px; row-gap: 120px; width: 100%; max-width: 1300px;
+            transition: all 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .app-container {
+            display: flex; flex-direction: column; align-items: center; gap: 16px;
+        }
+
+        .app-item {
+            width: 160px; height: 160px; border-radius: 32px;
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.18) 0%, 
+                rgba(255, 255, 255, 0.08) 40%, 
+                rgba(255, 255, 255, 0.04) 100%);
+            backdrop-filter: blur(30px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative; overflow: hidden;
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 255, 255, 0.45),
+                0 8px 32px rgba(0, 0, 0, 0.15),
+                0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .app-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40%;
+            background: linear-gradient(180deg, 
+                rgba(255, 255, 255, 0.25) 0%, 
+                rgba(255, 255, 255, 0.08) 50%, 
+                transparent 100%);
+            border-radius: 32px 32px 0 0;
+            pointer-events: none;
+        }
+
+        .app-item::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, 
+                transparent 30%, 
+                rgba(255, 255, 255, 0.15) 50%, 
+                transparent 70%);
+            transform: rotate(45deg);
+            animation: liquidShine 4s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes liquidShine {
+            0%, 100% { 
+                opacity: 0;
+                transform: translateX(-100%) translateY(-100%) rotate(45deg); 
+            }
+            50% { 
+                opacity: 1;
+                transform: translateX(0%) translateY(0%) rotate(45deg); 
+            }
+        }
+
+        .app-item:hover {
+            transform: scale(1.15) translateY(-8px);
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.25) 0%, 
+                rgba(255, 255, 255, 0.12) 40%, 
+                rgba(255, 255, 255, 0.06) 100%);
+            border-color: rgba(255, 255, 255, 0.45);
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 255, 255, 0.55),
+                0 25px 50px rgba(0, 0, 0, 0.3),
+                0 12px 32px rgba(0, 0, 0, 0.18);
+        }
+
+        .app-item.selected {
+            transform: scale(1.2) translateY(-12px);
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.3) 0%, 
+                rgba(255, 255, 255, 0.15) 40%, 
+                rgba(255, 255, 255, 0.08) 100%);
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 255, 255, 0.65),
+                0 25px 50px rgba(0, 0, 0, 0.35),
+                0 15px 40px rgba(0, 0, 0, 0.25),
+                0 0 0 3px rgba(255, 255, 255, 0.15);
+        }
+
+        .app-item.selected::before {
+            background: linear-gradient(180deg, 
+                rgba(255, 255, 255, 0.35) 0%, 
+                rgba(255, 255, 255, 0.15) 50%, 
+                transparent 100%);
+        }
+
+        .app-item.selected .app-icon {
+            transform: scale(1.05);
+        }
+
+        .app-icon {
+            width: 130px; height: 130px; border-radius: 28px;
+            background-size: contain; background-position: center; background-repeat: no-repeat;
+        }
+
+        .app-name {
+            font-size: 32px; font-weight: 600; color: white; text-align: center;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Maps Control Panel */
+        .maps-control-panel {
+            position: absolute;
+            right: 20px;
+            top: 0;
+            bottom: 0;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 0;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .maps-control-panel.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .maps-controls-top {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            align-items: center;
+        }
+
+        .maps-controls-bottom {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px;
+            background: rgba(30, 30, 30, 0.85);
+            backdrop-filter: blur(20px);
+            border-radius: 52px;
+            gap: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .maps-control-btn {
+            width: 85px;
+            height: 85px;
+            border-radius: 50%;
+            background: rgba(60, 60, 60, 0.8);
+            backdrop-filter: blur(10px);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .maps-control-btn:hover {
+            background: rgba(80, 80, 80, 0.9);
+            transform: scale(1.05);
+        }
+
+        .maps-control-btn:active {
+            transform: scale(0.95);
+            background: rgba(90, 90, 90, 0.95);
+        }
+
+        .maps-control-icon {
+            font-size: 40px;
+            color: white;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .maps-control-icon svg {
+            display: block;
+            width: 40px;
+            height: 40px;
+        }
+
+        /* Maps Search Panel */
+        .maps-search-panel {
+            width: 420px;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.03) 100%);
+            backdrop-filter: blur(30px) saturate(180%);
+            border-radius: 40px;
+            position: absolute;
+            left: 110px;
+            top: 0;
+            display: none;
+            flex-direction: column;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                        0 8px 32px rgba(0, 0, 0, 0.15);
+            z-index: 150;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .maps-search-panel.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .maps-search-bar {
+            width: 100%;
+            height: 55px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 28px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .maps-search-bar:hover {
+            background: rgba(0, 0, 0, 0.5);
+            transform: scale(1.02);
+        }
+
+        .maps-search-icon {
+            font-size: 24px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .maps-search-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .maps-search-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: white;
+            flex: 1;
+        }
+
+        #mapContainer.with-sidebar-and-search {
+            margin-left: -530px;
+        }
+
+        .volume-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            height: 180px;
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.25) 0%, 
+                rgba(255, 255, 255, 0.15) 40%, 
+                rgba(255, 255, 255, 0.1) 100%);
+            backdrop-filter: blur(40px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 28px;
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 255, 255, 0.4),
+                0 20px 40px rgba(0, 0, 0, 0.3),
+                0 8px 24px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            z-index: 1000;
+            opacity: 0;
+            scale: 0.8;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            pointer-events: none;
+        }
+
+        .volume-popup.show {
+            opacity: 1;
+            scale: 1;
+            pointer-events: auto;
+        }
+
+        .volume-popup::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40%;
+            background: linear-gradient(180deg, 
+                rgba(255, 255, 255, 0.3) 0%, 
+                rgba(255, 255, 255, 0.1) 50%, 
+                transparent 100%);
+            border-radius: 28px 28px 0 0;
+            pointer-events: none;
+        }
+
+        .volume-icon {
+            font-size: 48px;
+            color: white;
+            text-shadow: 0 3px 8px rgba(0, 0, 0, 0.8);
+            position: relative;
+            z-index: 1;
+        }
+
+        .volume-level {
+            font-size: 36px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 3px 8px rgba(0, 0, 0, 0.8);
+            position: relative;
+            z-index: 1;
+        }
+
+        .volume-bar-container {
+            width: 300px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 4px;
+            position: relative;
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .volume-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #1DB954 0%, #1ed760 100%);
+            border-radius: 4px;
+            transition: width 0.2s ease;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(29, 185, 84, 0.4);
+            width: 50%;
+        }
+
+        .volume-bar-fill::after {
+            content: '';
+            position: absolute;
+            right: -6px;
+            top: -4px;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes signal-pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        
+        .signal-bar.active { animation: signal-pulse 2s infinite; }
+
+        .shuffle-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(25px);
+            color: #1DB954;
+            padding: 25px 50px;
+            border-radius: 20px;
+            border: 2px solid #1DB954;
+            font-size: 20px;
+            font-weight: 600;
+            text-align: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 25px 50px rgba(29, 185, 84, 0.4);
+        }
+        
+        .shuffle-notification.show {
+            opacity: 1;
+        }
+        
+        .shuffle-notification .shuffle-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .split-view-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            padding: 20px 20px 20px 20px;
+            gap: 20px;
+            z-index: 20;
+            flex-direction: row;
+        }
+
+        .split-view-screen.active {
+            display: flex !important;
+        }
+
+        .split-panel {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.08) 100%);
+            backdrop-filter: blur(30px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 30px;
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 255, 255, 0.4),
+                0 15px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .split-panel.selected {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.40) 0%, rgba(255, 255, 255, 0.25) 100%);
+            border: 3px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 
+                inset 0 2px 0 rgba(255, 255, 255, 0.7),
+                0 0 0 4px rgba(255, 255, 255, 0.4),
+                0 0 30px rgba(255, 255, 255, 0.6),
+                0 25px 60px rgba(0, 0, 0, 0.4);
+            transform: scale(1.02);
+        }
+
+        .split-panel-large {
+            flex: 6;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .split-panel-large #mapContainer {
+            position: relative;
+            left: -280px;
+        }
+        
+        .fullscreen-layout #mapContainer {
+            position: relative;
+            left: 780px;
+        }
+
+        .split-panel-small {
+            flex: 2;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 30px;
+        }
+
+        .split-music-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 20px;
+        }
+
+        .split-album-art {
+            width: 200px;
+            height: 200px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 80px;
+            color: white;
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .split-album-art.has-image {
+            color: transparent;
+        }
+
+        .split-track-info {
+            text-align: center;
+            width: 100%;
+        }
+
+        .split-track-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .split-track-artist {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .split-progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            margin: 10px 0;
+        }
+
+        .split-progress-fill {
+            height: 100%;
+            background: white;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .split-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .split-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .split-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .split-btn-play {
+            width: 60px;
+            height: 60px;
+            font-size: 22px;
+        }
+
+        .blank-page-3 {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 20;
+            padding: 40px 60px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Boot Screen -->
+    <div class="boot-screen" id="bootScreen">
+        <img src="/vehicles/sdd_g82/carplay/logo.png" alt="Logo" class="boot-logo">
+    </div>
+
+    <div class="carplay-frame" id="carplayFrame">
+        <!-- Apple Intelligence Screen Edge Glow -->
+        <div class="screen-edge-glow-top" id="screenEdgeGlowTop"></div>
+        <div class="screen-edge-glow-bottom" id="screenEdgeGlowBottom"></div>
+        <div class="screen-edge-glow-left" id="screenEdgeGlowLeft"></div>
+        <div class="screen-edge-glow-right" id="screenEdgeGlowRight"></div>
+        
+        <div class="normal-layout" id="normalLayout">
+            <div class="sidebar">
+                <div class="sidebar-time" id="sidebarTime">9:41</div>
+                <div class="signal-indicator">
+                    <div class="signal-bars strong" id="signalBars">
+                        <div class="signal-bar"></div>
+                        <div class="signal-bar"></div>
+                        <div class="signal-bar"></div>
+                        <div class="signal-bar"></div>
+                    </div>
+                    <div class="signal-text" id="signalText">5G</div>
+                </div>
+                
+                <div class="recent-apps" id="recentApps">
+                </div>
+            </div>
+
+            <div class="main-area" id="mainArea">
+                <div class="home-screen active" id="homeScreen">
+                    <div class="apps-grid" id="appsGrid">
+                        <div class="app-container">
+                            <div class="app-item selected" data-app="music" onclick="launchApp('music')">
+                                <div class="app-icon" style="background-image: url('/vehicles/sdd_g82/carplay/app_icon_spotify.png');"></div>
+                            </div>
+                            <div class="app-name">Music</div>
+                        </div>
+                        
+                        <div class="app-container">
+                            <div class="app-item" data-app="maps" onclick="launchApp('maps')">
+                                <div class="app-icon" style="background-image: url('/vehicles/sdd_g82/carplay/app_icon_maps.png');"></div>
+                            </div>
+                            <div class="app-name">Maps</div>
+                        </div>
+                        
+                        <div class="app-container">
+                            <div class="app-item" data-app="phone" onclick="launchApp('phone')">
+                                <div class="app-icon" style="background-image: url('/vehicles/sdd_g82/carplay/app_icon_phone.png');"></div>
+                            </div>
+                            <div class="app-name">Phone</div>
+                        </div>
+                        
+                        <div class="app-container">
+                            <div class="app-item" data-app="messages" onclick="launchApp('messages')">
+                                <div class="app-icon" style="background-image: url('/vehicles/sdd_g82/carplay/app_icon_messages.png');"></div>
+                            </div>
+                            <div class="app-name">Messages</div>
+                        </div>
+                        
+                        <div class="app-container">
+                            <div class="app-item" data-app="weather" onclick="launchApp('weather')">
+                                <div class="app-icon" style="background-image: url('/vehicles/sdd_g82/carplay/app_icon_weather.png'), url('/vehicles/sdd_g82/carplay/app_icon_spotify.png');"></div>
+                            </div>
+                            <div class="app-name">Weather</div>
+                        </div>
+                        
+                        <div class="app-container">
+                            <div class="app-item" data-app="settings" onclick="launchApp('settings')">
+                                <div class="app-icon" style="background-image: url('/vehicles/sdd_g82/carplay/app_icon_settings.png');"></div>
+                            </div>
+                            <div class="app-name">Settings</div>
+                        </div>
+                        
+                        <div class="app-container">
+                            <div class="app-item" data-app="calendar" onclick="launchApp('calendar')">
+                                <div class="app-icon" style="background-image: url('/vehicles/sdd_g82/carplay/app_icon_calendar.png');"></div>
+                            </div>
+                            <div class="app-name">Calendar</div>
+                        </div>
+                        
+                        <div class="app-container">
+                            <div class="app-item" data-app="podcasts" onclick="launchApp('podcasts')">
+                                <div class="app-icon" style="background-image: url('/vehicles/sdd_g82/carplay/app_icon_podcasts.png'), url('/vehicles/sdd_g82/carplay/app_icon_spotify.png');"></div>
+                            </div>
+                            <div class="app-name">Podcasts</div>
+                        </div>
+                        
+                        <div class="app-container">
+                            <div class="app-item" data-app="audiobooks" onclick="launchApp('audiobooks')">
+                                <div class="app-icon" style="background-image: url('/vehicles/sdd_g82/carplay/app_icon_audiobooks.png'), url('/vehicles/sdd_g82/carplay/app_icon_spotify.png');"></div>
+                            </div>
+                            <div class="app-name">Audiobooks</div>
+                        </div>
+                        
+                        <div class="app-container">
+                            <div class="app-item" data-app="news" onclick="launchApp('news')">
+                                <div class="app-icon" style="background-image: url('/vehicles/sdd_g82/carplay/app_icon_news.png');"></div>
+                            </div>
+                            <div class="app-name">News</div>
+                        </div>
+                    </div>
+                </div>
+
+                <iframe id="phoneFrame" class="app-iframe" src="phone.html"></iframe>
+                <iframe id="messagesFrame" class="app-iframe" src="messages.html"></iframe>
+                <iframe id="weatherFrame" class="app-iframe" src="weather.html"></iframe>
+                <iframe id="settingsFrame" class="app-iframe" src="settings.html"></iframe>
+                <iframe id="calendarFrame" class="app-iframe" src="calendar.html"></iframe>
+                <iframe id="podcastsFrame" class="app-iframe" src="podcasts.html"></iframe>
+                <iframe id="audiobooksFrame" class="app-iframe" src="audiobooks.html"></iframe>
+                <iframe id="newsFrame" class="app-iframe" src="news.html"></iframe>
+
+                <div class="split-view-screen" id="splitViewScreen">
+                    <div class="split-panel split-panel-large selected" id="splitMapPanel">
+                        <div id="splitViewArrow" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000; pointer-events: none;">
+                            <svg width="350" height="350" viewBox="0 0 220 220" style="overflow: visible;">
+                                <circle cx="110" cy="110" r="35" fill="#4A90E2" opacity="0.5">
+                                    <animate attributeName="r" from="35" to="60" dur="2s" repeatCount="indefinite"/>
+                                    <animate attributeName="opacity" from="0.5" to="0" dur="2s" repeatCount="indefinite"/>
+                                </circle>
+                                <circle cx="110" cy="110" r="28" fill="#FFFFFF"/>
+                                <circle cx="110" cy="110" r="20" fill="#4A90E2"/>
+                                <path d="M 110 72 L 101 87 L 119 87 Z" fill="#4A90E2"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="split-panel split-panel-small" id="splitMusicPanel">
+                        <div class="split-music-content">
+                            <div class="split-album-art" id="splitAlbumArt">🎵</div>
+                            <div class="split-track-info">
+                                <div class="split-track-title" id="splitTrackTitle">No Music</div>
+                                <div class="split-track-artist" id="splitTrackArtist">Select a song</div>
+                            </div>
+                            <div class="split-progress-bar">
+                                <div class="split-progress-fill" id="splitProgressFill" style="width: 0%"></div>
+                            </div>
+                            <div class="split-controls">
+                                <button class="split-btn" onclick="miniPlayerControl('previous')">⮜</button>
+                                <button class="split-btn split-btn-play" id="splitPlayBtn" onclick="miniPlayerControl('playpause')">▶</button>
+                                <button class="split-btn" onclick="miniPlayerControl('next')">⮞</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Page 3 (Left of Split View) - Widgets Screen -->
+                <div class="blank-page-3" id="blankPage3">
+                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 40px;">
+                        <!-- Clock Widget (Left) -->
+                        <div style="flex: 1; height: 100%; display: flex; align-items: center; justify-content: center;">
+                            <div style="position: relative; width: 420px; height: 420px;">
+                                <svg viewBox="0 0 200 200" style="width: 100%; height: 100%;">
+                                    <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+                                    <line x1="100" y1="10" x2="100" y2="25" stroke="white" stroke-width="4" stroke-linecap="round"/>
+                                    <line x1="143.97" y1="22.02" x2="137.48" y2="34.35" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                                    <line x1="177.98" y1="56.03" x2="168.65" y2="65.52" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                                    <line x1="190" y1="100" x2="175" y2="100" stroke="white" stroke-width="4" stroke-linecap="round"/>
+                                    <line x1="177.98" y1="143.97" x2="168.65" y2="134.48" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                                    <line x1="143.97" y1="177.98" x2="137.48" y2="165.65" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                                    <line x1="100" y1="190" x2="100" y2="175" stroke="white" stroke-width="4" stroke-linecap="round"/>
+                                    <line x1="56.03" y1="177.98" x2="62.52" y2="165.65" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                                    <line x1="22.02" y1="143.97" x2="31.35" y2="134.48" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                                    <line x1="10" y1="100" x2="25" y2="100" stroke="white" stroke-width="4" stroke-linecap="round"/>
+                                    <line x1="22.02" y1="56.03" x2="31.35" y2="65.52" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                                    <line x1="56.03" y1="22.02" x2="62.52" y2="34.35" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                                    <line id="page3HourHand" x1="100" y1="100" x2="100" y2="55" stroke="white" stroke-width="6" stroke-linecap="round" style="transform-origin: 100px 100px;"/>
+                                    <line id="page3MinuteHand" x1="100" y1="100" x2="100" y2="35" stroke="white" stroke-width="4" stroke-linecap="round" style="transform-origin: 100px 100px;"/>
+                                    <circle cx="100" cy="100" r="6" fill="white"/>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <!-- Car Photo (Middle) -->
+                        <div style="flex: 1; height: 100%; display: flex; align-items: center; justify-content: center;">
+                            <img src="/vehicles/sdd_g82/carplay/car.png" style="max-width: 100%; max-height: 100%; object-fit: contain;" alt="Car">
+                        </div>
+                        
+                        <!-- Date Widget (Right) -->
+                        <div style="flex: 1; height: 100%; display: flex; align-items: center; justify-content: center;">
+                            <div style="padding: 35px 55px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.08) 100%); backdrop-filter: blur(30px) saturate(180%); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 30px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 15px 40px rgba(0, 0, 0, 0.2);">
+                                <div style="text-align: center;">
+                                    <div style="display: flex; align-items: baseline; justify-content: center; gap: 12px; margin-bottom: 16px;">
+                                        <div id="page3DayName" style="font-size: 56px; font-weight: 700; color: #FF3B30; text-shadow: 0 3px 8px rgba(0, 0, 0, 0.8);">Fri</div>
+                                        <div id="page3MonthName" style="font-size: 56px; font-weight: 700; color: white; text-shadow: 0 3px 8px rgba(0, 0, 0, 0.8);">Sep</div>
+                                    </div>
+                                    <div id="page3DayNumber" style="font-size: 120px; font-weight: 800; color: white; line-height: 1; text-shadow: 0 4px 12px rgba(0, 0, 0, 0.9);">5</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="fullscreen-layout" id="fullscreenLayout">
+            <!-- Maps Sidebar Clone -->
+            <div class="maps-sidebar" id="mapsSidebar">
+                <div class="sidebar-time" id="mapsSidebarTime">9:41</div>
+                <div class="signal-indicator">
+                    <div class="signal-bars strong" id="mapsSignalBars">
+                        <div class="signal-bar"></div>
+                        <div class="signal-bar"></div>
+                        <div class="signal-bar"></div>
+                        <div class="signal-bar"></div>
+                    </div>
+                    <div class="signal-text" id="mapsSignalText">5G</div>
+                </div>
+                
+                <div class="recent-apps" id="mapsRecentApps">
+                </div>
+            </div>
+
+            <iframe id="musicFrame" class="app-iframe fullscreen" src="spotify.html"></iframe>
+            
+            <!-- Maps Search Panel -->
+            <div class="maps-search-panel" id="mapsSearchPanel">
+                <div class="maps-search-bar" onclick="handleMapSearch()">
+                    <div class="maps-search-icon">
+                        <svg viewBox="0 0 24 24" fill="white">
+                            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                        </svg>
+                    </div>
+                    <div class="maps-search-text">Search</div>
+                </div>
+            </div>
+            
+            <div id="fullscreenArrow" style="display: none; position: absolute; top: 50%; left: 1080px; transform: translate(-50%, -50%); z-index: 2000; pointer-events: none;">
+                <svg width="350" height="350" viewBox="0 0 220 220" style="overflow: visible;">
+                    <circle cx="110" cy="110" r="35" fill="#4A90E2" opacity="0.5">
+                        <animate attributeName="r" from="35" to="60" dur="2s" repeatCount="indefinite"/>
+                        <animate attributeName="opacity" from="0.5" to="0" dur="2s" repeatCount="indefinite"/>
+                    </circle>
+                    <circle cx="110" cy="110" r="28" fill="#FFFFFF"/>
+                    <circle cx="110" cy="110" r="20" fill="#4A90E2"/>
+                    <path d="M 110 72 L 101 87 L 119 87 Z" fill="#4A90E2"/>
+                </svg>
+            </div>
+            
+            <div id="mapContainer" style="display: none; width: 100%; height: 100%; position: relative; background: #000; border-radius: 40px; overflow: hidden;">
+                <svg style="overflow: visible;"></svg>
+            </div>
+
+            <!-- Maps Control Panel -->
+            <div class="maps-control-panel" id="mapsControlPanel">
+                <div class="maps-controls-top">
+                    <button class="maps-control-btn" onclick="handleMapControl('route')" title="Route">
+                        <div class="maps-control-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+                                <circle cx="5" cy="5" r="2" fill="white"/>
+                                <path d="M5 7 Q8 10, 12 12 T19 17"/>
+                                <circle cx="19" cy="19" r="2" fill="white"/>
+                            </svg>
+                        </div>
+                    </button>
+                    
+                    <button class="maps-control-btn" onclick="handleMapControl('volume')" title="Volume">
+                        <div class="maps-control-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                            </svg>
+                        </div>
+                    </button>
+                    
+                    <button class="maps-control-btn" onclick="handleMapControl('info')" title="Info">
+                        <div class="maps-control-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                            </svg>
+                        </div>
+                    </button>
+                </div>
+
+                <div class="maps-controls-bottom">
+                    <button class="maps-control-btn" onclick="handleMapControl('pan')" title="Pan Map">
+                        <div class="maps-control-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                                <path d="M12 2l-3 3h2v4H7V7l-3 3 3 3v-2h4v4H9l3 3 3-3h-2v-4h4v2l3-3-3-3v2h-4V5h2z"/>
+                            </svg>
+                        </div>
+                    </button>
+                    
+                    <button class="maps-control-btn" onclick="handleMapControl('zoomin')" title="Zoom In">
+                        <div class="maps-control-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                            </svg>
+                        </div>
+                    </button>
+                    
+                    <button class="maps-control-btn" onclick="handleMapControl('zoomout')" title="Zoom Out">
+                        <div class="maps-control-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                                <path d="M19 13H5v-2h14v2z"/>
+                            </svg>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="volume-popup" id="volumePopup">
+        <div class="volume-icon" id="volumeIcon">🔊</div>
+        <div class="volume-level" id="volumeLevel">50</div>
+        <div class="volume-bar-container">
+            <div class="volume-bar-fill" id="volumeBarFill" style="width: 50%"></div>
+        </div>
+    </div>
+
+    <div class="shuffle-notification" id="shuffleNotification">
+        <div class="shuffle-icon">🔀</div>
+        <div>Shuffle is permanently enabled</div>
+        <div style="font-size: 16px; opacity: 0.85; margin-top: 6px;">Every song plays in random order</div>
+    </div>
+
+    <script type="module">
+        import { bngNavigator } from "/ui/ui-vue/src/services/navigator.js"
+        
+        window.map = new bngNavigator({
+            container: "#mapContainer",
+            offsetX: 820,
+            offsetY: 340,
+            pitch: 60,
+            speedPitch: 2.5,
+            scale: 3.5
+        });
+
+        console.log("CarPlay: Single map instance initialized");
+    </script>
+
+    <script>
+        let carPlayData = { 
+            active: true, 
+            currentApp: 'home', 
+            selectedAppIndex: 0, 
+            playlistScreenOpen: false, 
+            libraryScreenOpen: false,
+            lastUpdateHash: null,
+            splitViewSelectedPanel: 0
+        };
+        let currentScreen = 'home';
+        let recentApps = [];
+        const MAX_RECENT_APPS = 3;
+
+        let volumeData = {
+            volume: 50,
+            isVisible: false,
+            hideTimer: null,
+            lastChangeTime: 0
+        };
+
+        // Boot screen state
+        let bootScreenState = {
+            hasShown: false,
+            wasCarOff: true,
+            bootDuration: 2500
+        };
+
+        const appIconMapping = {
+            default: {
+                music: '/vehicles/sdd_g82/carplay/app_icon_spotify.png',
+                maps: '/vehicles/sdd_g82/carplay/app_icon_maps.png',
+                phone: '/vehicles/sdd_g82/carplay/app_icon_phone.png',
+                messages: '/vehicles/sdd_g82/carplay/app_icon_messages.png',
+                weather: '/vehicles/sdd_g82/carplay/app_icon_weather.png',
+                settings: '/vehicles/sdd_g82/carplay/app_icon_settings.png',
+                calendar: '/vehicles/sdd_g82/carplay/app_icon_calendar.png',
+                podcasts: '/vehicles/sdd_g82/carplay/app_icon_podcasts.png',
+                audiobooks: '/vehicles/sdd_g82/carplay/app_icon_audiobooks.png',
+                news: '/vehicles/sdd_g82/carplay/app_icon_news.png'
+            },
+            'liquid-glass': {
+                music: '/vehicles/sdd_g82/carplay/app_icon_spotify_clear.png',
+                maps: '/vehicles/sdd_g82/carplay/app_icon_maps_clear.png',
+                phone: '/vehicles/sdd_g82/carplay/app_icon_phone_clear.png',
+                messages: '/vehicles/sdd_g82/carplay/app_icon_messages_clear.png',
+                weather: '/vehicles/sdd_g82/carplay/app_icon_weather_clear.png',
+                settings: '/vehicles/sdd_g82/carplay/app_icon_settings_clear.png',
+                calendar: '/vehicles/sdd_g82/carplay/app_icon_calendar_clear.png',
+                podcasts: '/vehicles/sdd_g82/carplay/app_icon_podcasts_clear.png',
+                audiobooks: '/vehicles/sdd_g82/carplay/app_icon_audiobooks_clear.png',
+                news: '/vehicles/sdd_g82/carplay/app_icon_news_clear.png'
+            }
+        };
+
+        let musicData = {
+            isPlaying: false,
+            currentSong: "No Music Playing",
+            artist: "",
+            currentTime: "0:00",
+            totalTime: "0:00",
+            volume: 75,
+            shuffle: false,
+            repeatMode: "off",
+            currentTrackIndex: 0,
+            currentPlaylist: "likedsongs",
+            albumArt: null,
+            hasSongs: false,
+            playlists: [],
+            currentSongId: null,
+            likedSongs: []
+        };
+
+        let miniPlayerData = {
+            isPlaying: false,
+            currentSong: "No Music Playing",
+            artist: "",
+            albumArt: null,
+            visible: false
+        };
+
+        let settingsData = {
+            wallpaper: 1,
+            iconTheme: 'default',
+            currentPlaylist: 'likedsongs',
+            currentTrackIndex: 1
+        };
+
+        let gpsData = {
+            x: 0,
+            y: 0,
+            rotation: 0,
+            zoom: 150,
+            speed: 0,
+            ignitionLevel: 0
+        };
+
+        const elements = {
+            bootScreen: document.getElementById('bootScreen'),
+            homeScreen: document.getElementById('homeScreen'),
+            sidebarTime: document.getElementById('sidebarTime'),
+            signalText: document.getElementById('signalText'),
+            signalBars: document.getElementById('signalBars'),
+            appsGrid: document.getElementById('appsGrid'),
+            carplayFrame: document.getElementById('carplayFrame'),
+            recentApps: document.getElementById('recentApps'),
+            normalLayout: document.getElementById('normalLayout'),
+            fullscreenLayout: document.getElementById('fullscreenLayout'),
+            shuffleNotification: document.getElementById('shuffleNotification'),
+            volumePopup: document.getElementById('volumePopup'),
+            volumeIcon: document.getElementById('volumeIcon'),
+            volumeLevel: document.getElementById('volumeLevel'),
+            volumeBarFill: document.getElementById('volumeBarFill'),
+            mapsControlPanel: document.getElementById('mapsControlPanel'),
+            mapsSearchPanel: document.getElementById('mapsSearchPanel'),
+            mapsSidebar: document.getElementById('mapsSidebar'),
+            mapsSidebarTime: document.getElementById('mapsSidebarTime'),
+            mapsSignalText: document.getElementById('mapsSignalText'),
+            mapsSignalBars: document.getElementById('mapsSignalBars'),
+            mapsRecentApps: document.getElementById('mapsRecentApps')
+        };
+
+        const frames = {
+            music: document.getElementById('musicFrame'),
+            phone: document.getElementById('phoneFrame'),
+            messages: document.getElementById('messagesFrame'),
+            weather: document.getElementById('weatherFrame'),
+            settings: document.getElementById('settingsFrame'),
+            calendar: document.getElementById('calendarFrame'),
+            podcasts: document.getElementById('podcastsFrame'),
+            audiobooks: document.getElementById('audiobooksFrame'),
+            news: document.getElementById('newsFrame')
+        };
+
+        function showBootScreen() {
+            console.log("CarPlay: Showing boot screen");
+            elements.bootScreen.classList.add('active');
+            
+            setTimeout(() => {
+                elements.bootScreen.classList.add('fade-out');
+                setTimeout(() => {
+                    elements.bootScreen.classList.remove('active', 'fade-out');
+                    bootScreenState.hasShown = true;
+                    console.log("CarPlay: Boot screen hidden");
+                }, 500);
+            }, bootScreenState.bootDuration);
+        }
+
+        function checkBootScreenConditions(ignitionLevel) {
+            if (bootScreenState.wasCarOff && ignitionLevel > 0 && !bootScreenState.hasShown) {
+                showBootScreen();
+                bootScreenState.wasCarOff = false;
+            } else if (ignitionLevel === 0) {
+                bootScreenState.wasCarOff = true;
+                bootScreenState.hasShown = false;
+            }
+        }
+
+        function handleMapControl(action) {
+            console.log("Map control action:", action);
+            
+            switch(action) {
+                case 'route':
+                    console.log("Route/directions requested");
+                    break;
+                case 'volume':
+                    updateVolumeDisplay({
+                        volume: volumeData.volume,
+                        isVisible: true
+                    });
+                    break;
+                case 'info':
+                    console.log("Map info requested");
+                    break;
+                case 'pan':
+                    console.log("Pan mode activated");
+                    break;
+                case 'zoomin':
+                    if (gpsData) {
+                        gpsData.zoom = Math.max(100, gpsData.zoom - 50);
+                        if (window.map) {
+                            window.map.updateData(gpsData);
+                        }
+                        console.log("Zoom in:", gpsData.zoom);
+                    }
+                    break;
+                case 'zoomout':
+                    if (gpsData) {
+                        gpsData.zoom = Math.min(500, gpsData.zoom + 50);
+                        if (window.map) {
+                            window.map.updateData(gpsData);
+                        }
+                        console.log("Zoom out:", gpsData.zoom);
+                    }
+                    break;
+            }
+        }
+
+        function handleMapSearch() {
+            console.log("Map search clicked");
+        }
+
+        function updateVolumeDisplay(data) {
+            console.log("CarPlay: Updating volume display", data);
+            
+            if (!data) return;
+            
+            const previousVolume = volumeData.volume;
+            volumeData.volume = data.volume !== undefined ? data.volume : 50;
+            volumeData.isVisible = data.isVisible || false;
+            
+            elements.volumeLevel.textContent = Math.round(volumeData.volume);
+            elements.volumeBarFill.style.width = volumeData.volume + '%';
+            
+            if (volumeData.volume === 0) {
+                elements.volumeIcon.textContent = '🔇';
+            } else if (volumeData.volume < 30) {
+                elements.volumeIcon.textContent = '🔈';
+            } else if (volumeData.volume < 70) {
+                elements.volumeIcon.textContent = '🔉';
+            } else {
+                elements.volumeIcon.textContent = '🔊';
+            }
+            
+            if (volumeData.isVisible) {
+                elements.volumePopup.classList.add('show');
+                console.log("CarPlay: Volume popup shown");
+                
+                if (volumeData.hideTimer) {
+                    clearTimeout(volumeData.hideTimer);
+                }
+                
+                volumeData.hideTimer = setTimeout(() => {
+                    elements.volumePopup.classList.remove('show');
+                    volumeData.isVisible = false;
+                    console.log("CarPlay: Volume popup auto-hidden after 3 seconds");
+                }, 1000);
+                
+                volumeData.lastChangeTime = Date.now();
+                
+            } else {
+                if (volumeData.hideTimer) {
+                    clearTimeout(volumeData.hideTimer);
+                    volumeData.hideTimer = null;
+                }
+                elements.volumePopup.classList.remove('show');
+                console.log("CarPlay: Volume popup hidden");
+            }
+        }
+
+        window.updateVolumeDisplay = updateVolumeDisplay;
+
+        function addToRecentApps(appName) {
+            if (!appName || appName === 'home') return;
+            
+            recentApps = recentApps.filter(app => app !== appName);
+            recentApps.unshift(appName);
+            
+            if (recentApps.length > MAX_RECENT_APPS) {
+                recentApps = recentApps.slice(0, MAX_RECENT_APPS);
+            }
+            
+            updateRecentAppsDisplay();
+        }
+
+        function updateRecentAppsDisplay() {
+            const recentAppsContainer = elements.recentApps;
+            if (!recentAppsContainer) return;
+            
+            recentAppsContainer.innerHTML = '';
+            
+            if (recentApps.length === 0) {
+                for (let i = 0; i < MAX_RECENT_APPS; i++) {
+                    const placeholderDiv = document.createElement('div');
+                    placeholderDiv.className = 'recent-app-placeholder';
+                    recentAppsContainer.appendChild(placeholderDiv);
+                }
+            } else {
+                recentApps.forEach((appName, index) => {
+                    const recentAppDiv = document.createElement('div');
+                    recentAppDiv.className = 'recent-app';
+                    
+                    const iconSet = appIconMapping[settingsData.iconTheme] || appIconMapping.default;
+                    const iconPath = iconSet[appName] || iconSet.music;
+                    recentAppDiv.style.backgroundImage = `url('${iconPath}')`;
+                    recentAppDiv.onclick = () => launchApp(appName);
+                    
+                    recentAppsContainer.appendChild(recentAppDiv);
+                });
+            }
+            
+            if (elements.mapsRecentApps && elements.mapsSidebar && elements.mapsSidebar.classList.contains('active')) {
+                elements.mapsRecentApps.innerHTML = recentAppsContainer.innerHTML;
+            }
+        }
+
+        function applyWallpaper(wallpaperNum) {
+            const carplayFrame = document.querySelector('.carplay-frame');
+            const wallpaperPath = `/vehicles/sdd_g82/carplay/screen_background_${wallpaperNum}.png`;
+            carplayFrame.style.setProperty('background-image', `url('${wallpaperPath}')`, 'important');
+            console.log('CarPlay: Applied wallpaper', wallpaperNum);
+        }
+
+        function applyIconTheme(theme) {
+            const iconSet = appIconMapping[theme] || appIconMapping.default;
+            
+            const appContainers = document.querySelectorAll('.app-container');
+            appContainers.forEach(container => {
+                const appItem = container.querySelector('.app-item');
+                const appIcon = container.querySelector('.app-icon');
+                
+                if (appItem && appIcon) {
+                    const appName = appItem.dataset.app;
+                    if (appName && iconSet[appName]) {
+                        appIcon.style.setProperty('background-image', `url('${iconSet[appName]}')`, 'important');
+                    }
+                }
+            });
+            
+            updateRecentAppsDisplay();
+            console.log('CarPlay: Applied icon theme', theme);
+        }
+
+        function updateMapData(data) {
+            if (!data || !window.map) {
+                console.warn(`[updateMapData] BLOCKED - data: ${!!data}, map: ${!!window.map}`);
+                return;
+            }
+            
+            const oldX = gpsData.x;
+            const oldY = gpsData.y;
+            const oldRot = gpsData.rotation;
+            
+            gpsData = {
+                x: data.x || 0,
+                y: data.y || 0,
+                rotation: (data.rotation || 0) + 270,
+                zoom: data.zoom || 150,
+                speed: data.speed || 0,
+                ignitionLevel: data.ignitionLevel || 0
+            };
+            
+            const changed = Math.abs(gpsData.x - oldX) > 0.1 || 
+                          Math.abs(gpsData.y - oldY) > 0.1 || 
+                          Math.abs(gpsData.rotation - oldRot) > 1;
+            
+            if (changed) {
+                console.log(`[updateMapData] GPS CHANGED: x=${gpsData.x.toFixed(1)} y=${gpsData.y.toFixed(1)} rot=${gpsData.rotation.toFixed(1)} screen=${currentScreen}`);
+            }
+            
+            if (currentScreen === 'maps' || currentScreen === 'splitview') {
+                try {
+                    console.log(`[updateMapData] CALLING map.updateData() - screen: ${currentScreen}`);
+                    window.map.updateData(gpsData);
+                } catch (e) {
+                    console.error("CarPlay Maps: Error updating map data", e);
+                }
+            } else {
+            }
+        }
+
+        let mapUpdateInterval = null;
+        let lastGpsUpdate = Date.now();
+        let lastLoggedPos = {x: 0, y: 0, rotation: 0};
+
+        function startMapUpdates() {
+            if (mapUpdateInterval) {
+                console.log("CarPlay: Map updates already running");
+                return;
+            }
+            
+            console.log("CarPlay: Starting continuous map updates at 60fps");
+            
+            mapUpdateInterval = setInterval(() => {
+                if ((currentScreen === 'maps' || currentScreen === 'splitview') && window.map) {
+                    if (gpsData && (gpsData.x !== 0 || gpsData.y !== 0)) {
+                        try {
+                            window.map.updateData(gpsData);
+                            
+                            const now = Date.now();
+                            if (now - lastGpsUpdate > 1000) {
+                                const posChanged = Math.abs(gpsData.x - lastLoggedPos.x) > 0.1 || 
+                                                  Math.abs(gpsData.y - lastLoggedPos.y) > 0.1 ||
+                                                  Math.abs(gpsData.rotation - lastLoggedPos.rotation) > 1;
+                                console.log(`[CarPlay Render Loop] pos: ${gpsData.x.toFixed(1)}, ${gpsData.y.toFixed(1)} rot: ${gpsData.rotation.toFixed(1)} (${posChanged ? 'MOVING' : 'STATIONARY'})`);
+                                lastLoggedPos = {x: gpsData.x, y: gpsData.y, rotation: gpsData.rotation};
+                                lastGpsUpdate = now;
+                            }
+                        } catch (e) {
+                            console.error("CarPlay Maps: Error in continuous update", e);
+                        }
+                    } else {
+                        console.warn("CarPlay: GPS data is zero or invalid");
+                    }
+                }
+            }, 16);
+        }
+
+        function stopMapUpdates() {
+            if (mapUpdateInterval) {
+                clearInterval(mapUpdateInterval);
+                mapUpdateInterval = null;
+                console.log("CarPlay: Stopped continuous map updates");
+            }
+        }
+
+        function parseTime(timeStr) {
+            if (!timeStr || timeStr === "0:00") return 0;
+            const parts = timeStr.split(':');
+            if (parts.length === 2) {
+                return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+            }
+            return 0;
+        }
+
+        function updateSplitViewMusic() {
+            if (currentScreen !== 'splitview') return;
+            
+            const splitAlbumArt = document.getElementById('splitAlbumArt');
+            const splitTrackTitle = document.getElementById('splitTrackTitle');
+            const splitTrackArtist = document.getElementById('splitTrackArtist');
+            const splitProgressFill = document.getElementById('splitProgressFill');
+            const splitPlayBtn = document.getElementById('splitPlayBtn');
+            
+            if (!splitAlbumArt || !splitTrackTitle || !splitTrackArtist || !splitProgressFill || !splitPlayBtn) return;
+            
+            if (musicData.albumArt && musicData.hasSongs) {
+                splitAlbumArt.style.backgroundImage = `url(${musicData.albumArt})`;
+                splitAlbumArt.classList.add('has-image');
+                splitAlbumArt.textContent = '';
+            } else {
+                splitAlbumArt.style.backgroundImage = '';
+                splitAlbumArt.classList.remove('has-image');
+                splitAlbumArt.textContent = musicData.hasSongs ? '🎵' : '♪';
+            }
+            
+            splitTrackTitle.textContent = musicData.currentSong || 'No Music';
+            splitTrackArtist.textContent = musicData.artist || 'Select a song';
+            
+            splitPlayBtn.textContent = musicData.isPlaying ? '⏸' : '▶';
+            
+            if (musicData.currentTime && musicData.totalTime && musicData.hasSongs) {
+                const currentSeconds = parseTime(musicData.currentTime);
+                const totalSeconds = parseTime(musicData.totalTime);
+                const progress = totalSeconds > 0 ? (currentSeconds / totalSeconds) * 100 : 0;
+                splitProgressFill.style.width = progress + '%';
+            } else {
+                splitProgressFill.style.width = '0%';
+            }
+        }
+
+        function miniPlayerControl(action) {
+            if (action === 'playpause') {
+                togglePlayPause();
+            } else if (action === 'next') {
+                nextTrack();
+            } else if (action === 'previous') {
+                previousTrack();
+            }
+        }
+
+        function showShuffleNotification() {
+            elements.shuffleNotification.classList.add('show');
+            setTimeout(() => {
+                elements.shuffleNotification.classList.remove('show');
+            }, 3000);
+        }
+
+        function activateScreenEdgeGlow() {
+            const edgeGlowTop = document.getElementById('screenEdgeGlowTop');
+            const edgeGlowBottom = document.getElementById('screenEdgeGlowBottom');
+            const edgeGlowLeft = document.getElementById('screenEdgeGlowLeft');
+            const edgeGlowRight = document.getElementById('screenEdgeGlowRight');
+            
+            if (edgeGlowTop) edgeGlowTop.classList.add('active');
+            if (edgeGlowBottom) edgeGlowBottom.classList.add('active');
+            if (edgeGlowLeft) edgeGlowLeft.classList.add('active');
+            if (edgeGlowRight) edgeGlowRight.classList.add('active');
+            
+            console.log('CarPlay: Screen edge glow activated');
+        }
+
+        function deactivateScreenEdgeGlow() {
+            const edgeGlowTop = document.getElementById('screenEdgeGlowTop');
+            const edgeGlowBottom = document.getElementById('screenEdgeGlowBottom');
+            const edgeGlowLeft = document.getElementById('screenEdgeGlowLeft');
+            const edgeGlowRight = document.getElementById('screenEdgeGlowRight');
+            
+            if (edgeGlowTop) edgeGlowTop.classList.remove('active');
+            if (edgeGlowBottom) edgeGlowBottom.classList.remove('active');
+            if (edgeGlowLeft) edgeGlowLeft.classList.remove('active');
+            if (edgeGlowRight) edgeGlowRight.classList.remove('active');
+            
+            console.log('CarPlay: Screen edge glow deactivated');
+        }
+        
+        window.activateScreenEdgeGlow = activateScreenEdgeGlow;
+        window.deactivateScreenEdgeGlow = deactivateScreenEdgeGlow;
+
+        function togglePlayPause() {}
+        function previousTrack() {}
+        function nextTrack() {}
+
+        function sendToFrame(frameId, message) {
+            const frame = frames[frameId];
+            if (frame && frame.contentWindow) {
+                frame.contentWindow.postMessage(message, '*');
+            }
+        }
+
+        function sendToAllFrames(message) {
+            Object.keys(frames).forEach(frameId => {
+                sendToFrame(frameId, message);
+            });
+        }
+
+        function handleLibraryCommand(command, data) {
+            console.log("CarPlay: Handling library command:", command, data);
+            
+            if (typeof window.beamng !== 'undefined' && window.beamng.sendActiveObjectLua) {
+                if (data) {
+                    if (data.playlistId) {
+                        window.beamng.sendActiveObjectLua(`
+                            if electrics and electrics.values then
+                                electrics.values.carplayLibraryPlaylistId = "${data.playlistId}"
+                            end
+                        `);
+                        console.log("CarPlay: Set playlistId:", data.playlistId);
+                    }
+                    if (data.songIndex !== undefined) {
+                        window.beamng.sendActiveObjectLua(`
+                            if electrics and electrics.values then
+                                electrics.values.carplayLibrarySongIndex = ${data.songIndex}
+                            end
+                        `);
+                        console.log("CarPlay: Set songIndex:", data.songIndex);
+                    }
+                    if (data.songId) {
+                        window.beamng.sendActiveObjectLua(`
+                            if electrics and electrics.values then
+                                electrics.values.carplayLibrarySongId = "${data.songId}"
+                            end
+                        `);
+                        console.log("CarPlay: Set songId:", data.songId);
+                    }
+                }
+
+                window.beamng.sendActiveObjectLua(`
+                    if electrics and electrics.values then
+                        electrics.values.carplayLibraryCommand = "${command}"
+                    end
+                `);
+
+                console.log("CarPlay: Library command processed, waiting for music controller response");
+            }
+        }
+
+        function sendExitToHomeSignal() {
+            console.log("CarPlay: ===== SENDING EXIT TO HOME SIGNAL =====");
+            console.log("CarPlay: Setting carplayExitToHome = 1");
+            
+            if (typeof window.beamng !== 'undefined' && window.beamng.sendActiveObjectLua) {
+                window.beamng.sendActiveObjectLua(`
+                    if electrics and electrics.values then
+                        electrics.values.carplayExitToHome = 1
+                    end
+                `);
+                console.log("CarPlay: Exit signal sent via Lua electrics");
+            }
+            
+            console.log("CarPlay: ===== EXIT SIGNAL SENT =====");
+        }
+
+        function handleSettingsChange(setting, value) {
+            console.log("CarPlay: Settings changed:", setting, value);
+            
+            if (typeof window.beamng !== 'undefined' && window.beamng.sendActiveObjectLua) {
+                if (setting === 'wallpaper') {
+                    settingsData.wallpaper = value;
+                    applyWallpaper(value);
+                    
+                    window.beamng.sendActiveObjectLua(`
+                        if electrics and electrics.values then
+                            electrics.values.carplayWallpaper = ${value}
+                        end
+                    `);
+                    console.log("CarPlay: Wallpaper changed to", value);
+                    
+                } else if (setting === 'iconTheme') {
+                    settingsData.iconTheme = value;
+                    applyIconTheme(value);
+                    
+                    window.beamng.sendActiveObjectLua(`
+                        if electrics and electrics.values then
+                            electrics.values.carplayIconTheme = "${value}"
+                        end
+                    `);
+                    console.log("CarPlay: Icon theme changed to", value);
+                }
+            }
+        }
+
+        function updateSplitViewSelection() {
+            const splitMapPanel = document.getElementById('splitMapPanel');
+            const splitMusicPanel = document.getElementById('splitMusicPanel');
+            
+            if (splitMapPanel && splitMusicPanel) {
+                if (carPlayData.splitViewSelectedPanel === 0) {
+                    splitMapPanel.classList.add('selected');
+                    splitMusicPanel.classList.remove('selected');
+                } else {
+                    splitMapPanel.classList.remove('selected');
+                    splitMusicPanel.classList.add('selected');
+                }
+            }
+        }
+
+        function handleSplitViewNavigation(direction) {
+            if (direction === 'left') {
+                carPlayData.splitViewSelectedPanel = 0;
+                updateSplitViewSelection();
+            } else if (direction === 'right') {
+                carPlayData.splitViewSelectedPanel = 1;
+                updateSplitViewSelection();
+            } else if (direction === 'select') {
+                if (carPlayData.splitViewSelectedPanel === 0) {
+                    launchApp('maps');
+                } else {
+                    launchApp('music');
+                }
+            } else if (direction === 'back') {
+                sendExitToHomeSignal();
+            }
+        }
+
+        function showScreen(screenName) {
+            const splitViewScreen = document.getElementById('splitViewScreen');
+            const mapContainer = document.getElementById('mapContainer');
+            const splitMapPanel = document.getElementById('splitMapPanel');
+            const fullscreenArrow = document.getElementById('fullscreenArrow');
+            const splitViewArrow = document.getElementById('splitViewArrow');
+            const blankPage3 = document.getElementById('blankPage3');
+            
+            console.log("CarPlay: Switching to screen:", screenName);
+            
+            deactivateScreenEdgeGlow();
+            
+            if (fullscreenArrow) fullscreenArrow.style.display = 'none';
+            if (splitViewArrow) splitViewArrow.style.display = 'none';
+            
+            if (screenName === 'maps') {
+                elements.mapsControlPanel.classList.add('active');
+                elements.mapsSearchPanel.classList.add('active');
+                elements.mapsSidebar.classList.add('active');
+                
+                elements.mapsSidebarTime.textContent = elements.sidebarTime.textContent;
+                elements.mapsSignalText.textContent = elements.signalText.textContent;
+                elements.mapsRecentApps.innerHTML = elements.recentApps.innerHTML;
+            } else {
+                elements.mapsControlPanel.classList.remove('active');
+                elements.mapsSearchPanel.classList.remove('active');
+                elements.mapsSidebar.classList.remove('active');
+            }
+            
+            if (screenName === 'page3') {
+                stopMapUpdates();
+                if (mapContainer) {
+                    mapContainer.style.display = 'none';
+                    mapContainer.classList.remove('with-sidebar-and-search');
+                }
+                splitViewScreen.classList.remove('active');
+                splitViewScreen.style.display = 'none';
+                elements.normalLayout.classList.remove('hidden');
+                elements.fullscreenLayout.classList.remove('active');
+                frames.music.classList.remove('active');
+                elements.homeScreen.classList.remove('active');
+                elements.homeScreen.classList.add('hidden');
+                Object.values(frames).forEach(frame => frame.classList.remove('active'));
+                
+                if (blankPage3) blankPage3.style.display = 'block';
+                currentScreen = 'page3';
+                
+            } else if (screenName === 'splitview') {
+                if (mapContainer && splitMapPanel) {
+                    splitMapPanel.appendChild(mapContainer);
+                    mapContainer.style.display = 'block';
+                    mapContainer.style.borderRadius = '30px';
+                }
+                
+                if (splitViewArrow) splitViewArrow.style.display = 'block';
+                if (blankPage3) blankPage3.style.display = 'none';
+                
+                updateSplitViewSelection();
+                
+                elements.normalLayout.classList.remove('hidden');
+                elements.fullscreenLayout.classList.remove('active');
+                frames.music.classList.remove('active');
+                
+                elements.homeScreen.classList.remove('active');
+                elements.homeScreen.classList.add('hidden');
+                
+                Object.values(frames).forEach(frame => frame.classList.remove('active'));
+                
+                splitViewScreen.classList.add('active');
+                splitViewScreen.style.display = 'flex';
+                currentScreen = 'splitview';
+                
+                console.log("CarPlay: Split view activated, map moved to split panel");
+                
+                setTimeout(() => {
+                    if (window.map && gpsData) {
+                        window.map.updateData(gpsData);
+                    }
+                    updateSplitViewMusic();
+                    startMapUpdates();
+                }, 200);
+                
+            } else if (screenName === 'music') {
+                stopMapUpdates();
+                if (mapContainer) {
+                    mapContainer.style.display = 'none';
+                    mapContainer.classList.remove('with-sidebar-and-search');
+                }
+                splitViewScreen.classList.remove('active');
+                splitViewScreen.style.display = 'none';
+                elements.normalLayout.classList.add('hidden');
+                elements.fullscreenLayout.classList.add('active');
+                frames.music.classList.add('active');
+                currentScreen = 'music';
+                addToRecentApps('music');
+                
+            } else if (screenName === 'maps') {
+                if (mapContainer && elements.fullscreenLayout) {
+                    elements.fullscreenLayout.appendChild(mapContainer);
+                    mapContainer.style.display = 'block';
+                    mapContainer.style.borderRadius = '40px';
+                    mapContainer.classList.add('with-sidebar-and-search');
+                }
+                
+                if (fullscreenArrow) fullscreenArrow.style.display = 'block';
+                
+                splitViewScreen.classList.remove('active');
+                splitViewScreen.style.display = 'none';
+                elements.normalLayout.classList.add('hidden');
+                elements.fullscreenLayout.classList.add('active');
+                frames.music.classList.remove('active');
+                currentScreen = 'maps';
+                addToRecentApps('maps');
+                
+                setTimeout(() => {
+                    if (window.map && gpsData) {
+                        window.map.updateData(gpsData);
+                    }
+                    startMapUpdates();
+                }, 100);
+                
+            } else {
+                stopMapUpdates();
+                if (mapContainer) {
+                    mapContainer.style.display = 'none';
+                    mapContainer.classList.remove('with-sidebar-and-search');
+                }
+                splitViewScreen.classList.remove('active');
+                splitViewScreen.style.display = 'none';
+                if (blankPage3) blankPage3.style.display = 'none';
+                elements.fullscreenLayout.classList.remove('active');
+                frames.music.classList.remove('active');
+                elements.normalLayout.classList.remove('hidden');
+                
+                Object.values(frames).forEach(frame => {
+                    if (frame && frame !== frames.music) {
+                        frame.classList.remove('active');
+                    }
+                });
+                
+                elements.homeScreen.classList.remove('active');
+                elements.homeScreen.classList.add('hidden');
+                
+                if (screenName === 'home') {
+                    elements.homeScreen.classList.add('active');
+                    elements.homeScreen.classList.remove('hidden');
+                    currentScreen = 'home';
+                    
+                    setTimeout(() => {
+                        applyWallpaper(settingsData.wallpaper || 1);
+                    }, 50);
+                } else {
+                    if (frames[screenName]) {
+                        frames[screenName].classList.add('active');
+                        currentScreen = screenName;
+                        addToRecentApps(screenName);
+                        
+                        sendToFrame(screenName, {
+                            type: 'updateBackground',
+                            wallpaper: settingsData.wallpaper
+                        });
+                    }
+                }
+            }
+            
+            setTimeout(() => {
+                if (screenName === 'splitview') {
+                    updateSplitViewMusic();
+                }
+            }, 100);
+        }
+
+        function launchApp(appName) {
+            addToRecentApps(appName);
+            showScreen(appName);
+            
+            if (typeof window.beamng !== 'undefined' && window.beamng.sendActiveObjectLua) {
+                window.beamng.sendActiveObjectLua(`
+                    if electrics and electrics.values then
+                        electrics.values.carplayAppLaunched = "${appName}"
+                    end
+                `);
+            }
+        }
+
+        function updateAppSelection() {
+            document.querySelectorAll('.app-item').forEach((item, index) => {
+                item.classList.toggle('selected', index === carPlayData.selectedAppIndex);
+            });
+        }
+
+        function updateTime() {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = now.getMinutes();
+            
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            
+            const timeStr = hours + ':' + (minutes < 10 ? '0' : '') + minutes;
+            elements.sidebarTime.textContent = timeStr;
+            
+            if (elements.mapsSidebar && elements.mapsSidebar.classList.contains('active')) {
+                elements.mapsSidebarTime.textContent = timeStr;
+            }
+            
+            updatePage3Clock();
+            updatePage3Date();
+        }
+
+        function updatePage3Clock() {
+            const now = new Date();
+            const hours = now.getHours() % 12;
+            const minutes = now.getMinutes();
+            
+            const hourAngle = (hours * 30) + (minutes * 0.5);
+            const minuteAngle = minutes * 6;
+            
+            const hourHand = document.getElementById('page3HourHand');
+            const minuteHand = document.getElementById('page3MinuteHand');
+            
+            if (hourHand) {
+                hourHand.style.transform = `rotate(${hourAngle}deg)`;
+            }
+            if (minuteHand) {
+                minuteHand.style.transform = `rotate(${minuteAngle}deg)`;
+            }
+        }
+
+        function updatePage3Date() {
+            const now = new Date();
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            
+            const dayName = dayNames[now.getDay()];
+            const monthName = monthNames[now.getMonth()];
+            const dayNumber = now.getDate();
+            
+            const dayNameEl = document.getElementById('page3DayName');
+            const monthNameEl = document.getElementById('page3MonthName');
+            const dayNumberEl = document.getElementById('page3DayNumber');
+            
+            if (dayNameEl) dayNameEl.textContent = dayName;
+            if (monthNameEl) monthNameEl.textContent = monthName;
+            if (dayNumberEl) dayNumberEl.textContent = dayNumber;
+        }
+
+        function updateSignal() {
+            const signalTypes = ['3G', '4G', '5G'];
+            const currentIndex = Math.floor(Math.random() * signalTypes.length);
+            elements.signalText.textContent = signalTypes[currentIndex];
+            
+            if (elements.mapsSignalText && elements.mapsSidebar && elements.mapsSidebar.classList.contains('active')) {
+                elements.mapsSignalText.textContent = signalTypes[currentIndex];
+            }
+        }
+
+        window.updateCarPlayData = function(data) {
+            if (!data) return;
+            
+        
+            if (data.gps) {
+             
+                updateMapData(data.gps);
+            }
+            
+            if (data.ignitionLevel !== undefined) {
+                checkBootScreenConditions(data.ignitionLevel);
+            }
+            
+            const dataHash = JSON.stringify({
+                active: data.active,
+                currentApp: data.currentApp,
+                selectedAppIndex: data.selectedAppIndex,
+                splitViewSelectedPanel: data.splitViewSelectedPanel,
+                musicIsPlaying: data.music?.isPlaying,
+                currentSong: data.music?.currentSong,
+                playlistsLength: data.music?.playlists ? data.music.playlists.length : 0,
+                currentViewSongsLength: data.music?.currentViewSongs ? data.music.currentViewSongs.length : 0,
+                musicShuffle: data.music?.shuffle,
+                musicRepeat: data.music?.repeatMode,
+                musicCurrentTime: data.music?.currentTime
+            });
+            
+            if (carPlayData.lastUpdateHash === dataHash) {
+                return;
+            }
+            
+            carPlayData.lastUpdateHash = dataHash;
+            carPlayData = { ...carPlayData, ...data };
+            
+            if (data.splitViewSelectedPanel !== undefined) {
+                carPlayData.splitViewSelectedPanel = data.splitViewSelectedPanel;
+            }
+            
+            if (data.settings) {
+                settingsData = { ...settingsData, ...data.settings };
+                applyWallpaper(settingsData.wallpaper);
+                applyIconTheme(settingsData.iconTheme);
+                
+                // FIXED: Only send settings data, NOT navigation state on regular updates
+                sendToFrame('settings', {
+                    type: 'updateSettingsData',
+                    data: {
+                        settings: data.settings
+                        // NO settingsNavigation here!
+                    }
+                });
+            }
+            
+            if (data.gps) {
+                updateMapData(data.gps);
+            }
+            
+            if (data.music) {
+                musicData = { ...musicData, ...data.music };
+                
+                miniPlayerData.isPlaying = musicData.isPlaying;
+                miniPlayerData.currentSong = musicData.currentSong;
+                miniPlayerData.artist = musicData.artist;
+                miniPlayerData.albumArt = musicData.albumArt;
+                
+                if (currentScreen === 'splitview') {
+                    updateSplitViewMusic();
+                }
+                
+                const musicDataToSend = {
+                    ...data.music,
+                    playlistScreenOpen: data.playlistScreenOpen || false,
+                    selectedPlaylistIndex: data.selectedPlaylistIndex || 0,
+                    libraryScreenOpen: data.libraryScreenOpen || false,
+                    libraryCurrentView: data.libraryCurrentView || 'playlists',
+                    likedSongs: data.music.likedSongs || [],
+                    currentViewSongs: data.music.currentViewSongs || []
+                };
+                
+                sendToFrame('music', {
+                    type: 'updateMusicData',
+                    data: musicDataToSend
+                });
+
+                sendToFrame('music', {
+                    type: 'updateSidebarData',
+                    recentApps: data.recentApps || [],
+                    iconTheme: settingsData.iconTheme || 'default'
+                });
+
+                if (musicData.albumArt && musicData.hasSongs) {
+                    sendToFrame('music', {
+                        type: 'updateAlbumBackground',
+                        albumArt: musicData.albumArt,
+                        hasSongs: musicData.hasSongs
+                    });
+                } else {
+                    sendToFrame('music', {
+                        type: 'clearAlbumBackground'
+                    });
+                }
+            }
+            
+            if (data.recentApps && Array.isArray(data.recentApps)) {
+                recentApps = data.recentApps.slice(0, MAX_RECENT_APPS);
+                updateRecentAppsDisplay();
+            }
+            
+            sendToAllFrames({
+                type: 'updateBackground',
+                wallpaper: settingsData.wallpaper,
+                albumArt: musicData.albumArt,
+                currentScreen: currentScreen
+            });
+            
+            updateAppSelection();
+            updateSplitViewMusic();
+            
+            // FIXED: Only change screens when the app actually changes in Lua
+            if (data.currentApp && data.currentApp !== currentScreen) {
+                showScreen(data.currentApp);
+                
+                // FIXED: Send navigation state ONLY when opening a new app
+                if (data.currentApp === 'settings' && data.settingsNavigation) {
+                    sendToFrame('settings', {
+                        type: 'updateSettingsData',
+                        data: {
+                            settings: data.settings,
+                            settingsNavigation: data.settingsNavigation
+                        }
+                    });
+                }
+            }
+        };
+
+        window.addEventListener('message', function(event) {
+            console.log("CarPlay: Received message:", event.data);
+            
+            if (event.data.type === 'navigation') {
+                console.log("CarPlay: Navigation event for screen:", currentScreen);
+                
+                if (currentScreen === 'splitview') {
+                    handleSplitViewNavigation(event.data.direction);
+                }
+                
+            } else if (event.data.type === 'appLaunched') {
+                launchApp(event.data.appName);
+            } else if (event.data.type === 'showShuffleNotification') {
+                showShuffleNotification();
+            } else if (event.data.type === 'libraryCommand') {
+                console.log("CarPlay: Received library command:", event.data.command);
+                handleLibraryCommand(event.data.command, event.data);
+            } else if (event.data.type === 'musicControl') {
+                console.log('Music control:', event.data);
+            } else if (event.data.type === 'exitToHome') {
+                console.log("CarPlay: Exit to home requested from app - sending signal to Lua");
+                sendExitToHomeSignal();
+            } else if (event.data.type === 'volumeChange') {
+                console.log("CarPlay: Volume change received:", event.data);
+                updateVolumeDisplay({
+                    volume: event.data.volume,
+                    isVisible: true
+                });
+            } else if (event.data.type === 'settingChanged') {
+                console.log("CarPlay: Setting changed:", event.data.setting, event.data.value);
+                handleSettingsChange(event.data.setting, event.data.value);
+            } else if (event.data.type === 'activateScreenEdgeGlow') {
+                console.log("CarPlay: Activate screen edge glow requested");
+                activateScreenEdgeGlow();
+            } else if (event.data.type === 'deactivateScreenEdgeGlow') {
+                console.log("CarPlay: Deactivate screen edge glow requested");
+                deactivateScreenEdgeGlow();
+            }
+        });
+
+        window.saveCarPlaySettings = function(settings) {};
+
+        updateTime();
+        updateSignal();
+        updateAppSelection();
+        updateRecentAppsDisplay();
+        applyWallpaper(settingsData.wallpaper || 1);
+        applyIconTheme(settingsData.iconTheme || 'default');
+        
+        setInterval(updateTime, 60000);
+        setInterval(updatePage3Clock, 1000);
+        setInterval(updateSignal, 3000);
+        
+        console.log("CarPlay: Main HTML initialized successfully with FIXED navigation state handling");
+    </script>
+</body>
+</html>

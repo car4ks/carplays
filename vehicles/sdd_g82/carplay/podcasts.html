@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Podcasts</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        /* Hide scrollbars */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        * { scrollbar-width: none; -ms-overflow-style: none; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000; color: white; overflow: hidden; 
+            width: 100%; height: 100vh; 
+            position: relative; display: flex; flex-direction: column;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .podcasts-screen {
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            border-radius: 0 40px 40px 0;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .app-header {
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(25px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0 40px 0 0;
+            position: relative;
+        }
+
+        .app-header-title {
+            font-size: 36px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 25px;
+        }
+
+        .header-btn {
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .header-btn.selected {
+            background: rgba(0, 122, 255, 0.4);
+            border-color: #007AFF;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .app-content {
+            flex: 1;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Up Next Queue Section */
+        .queue-section {
+            padding: 40px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .queue-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .queue-title {
+            font-size: 36px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .queue-chevron {
+            font-size: 30px;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .queue-chevron:hover {
+            color: #007AFF;
+            transform: translateX(4px);
+        }
+
+        .queue-items {
+            display: flex;
+            gap: 25px;
+            overflow-x: auto;
+            padding-bottom: 12px;
+        }
+
+        .queue-item {
+            min-width: 140px;
+            width: 140px;
+            height: 140px;
+            border-radius: 24px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            overflow: hidden;
+        }
+
+        .queue-item:hover {
+            transform: scale(1.05);
+        }
+
+        .queue-item.selected {
+            border-color: #007AFF;
+            transform: scale(1.08);
+            box-shadow: 0 4px 20px rgba(0, 122, 255, 0.4);
+        }
+
+        .queue-item.highlighted {
+            border-color: #007AFF;
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(0, 122, 255, 0.6);
+        }
+
+        .queue-artwork {
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            color: white;
+        }
+
+        /* Podcast List Section */
+        .podcasts-list {
+            padding: 0;
+        }
+
+        .podcast-item {
+            padding: 40px 40px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: transparent;
+            border-left: 5px solid transparent;
+        }
+
+        .podcast-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .podcast-item.selected {
+            background: rgba(0, 122, 255, 0.15);
+            border-left-color: #007AFF;
+        }
+
+        .podcast-item.highlighted {
+            background: rgba(0, 122, 255, 0.25);
+            border-left-color: #007AFF;
+            transform: scale(1.02);
+        }
+
+        .podcast-content {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .podcast-artwork {
+            width: 120px;
+            height: 120px;
+            border-radius: 24px;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .podcast-artwork.default {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 45px;
+            color: white;
+        }
+
+        .podcast-artwork.comedy { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .podcast-artwork.tech { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .podcast-artwork.business { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .podcast-artwork.crime { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .podcast-artwork.science { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+        .podcast-artwork.news { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .podcast-artwork.health { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
+        .podcast-artwork.history { background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%); }
+        .podcast-artwork.sports { background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); }
+
+        .podcast-info {
+            flex: 1;
+        }
+
+        .podcast-title {
+            font-size: 32px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 8px;
+            line-height: 1.2;
+        }
+
+        .podcast-subtitle {
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 12px;
+        }
+
+        .podcast-meta {
+            font-size: 22px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .podcast-chevron {
+            font-size: 40px;
+            color: rgba(255, 255, 255, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .podcast-item.selected .podcast-chevron,
+        .podcast-item.highlighted .podcast-chevron {
+            color: #007AFF;
+            transform: translateX(4px);
+        }
+
+        .play-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+            background: rgba(0, 122, 255, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            color: white;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .podcast-item.playing .play-indicator {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="podcasts-screen">
+        <div class="app-header">
+            <div class="app-header-title">Podcasts</div>
+            <div class="header-controls">
+                <div class="header-btn">Filters</div>
+                <div class="header-btn">Downloads</div>
+                <div class="header-btn selected">More</div>
+            </div>
+        </div>
+        
+        <div class="app-content">
+            <!-- Up Next Queue -->
+            <div class="queue-section">
+                <div class="queue-header">
+                    <div class="queue-title">Up Next Queue</div>
+                    <div class="queue-chevron">›</div>
+                </div>
+                <div class="queue-items">
+                    <div class="queue-item selected">
+                        <div class="queue-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/podcast_covers/joe_rogan_experience.png');"></div>
+                    </div>
+                    <div class="queue-item">
+                        <div class="queue-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/podcast_covers/impaulsive.png');"></div>
+                    </div>
+                    <div class="queue-item">
+                        <div class="queue-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/podcast_covers/war_room.png');"></div>
+                    </div>
+                    <div class="queue-item">
+                        <div class="queue-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/podcast_covers/past_gas.png');"></div>
+                    </div>
+                    <div class="queue-item">
+                        <div class="queue-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/podcast_covers/diary_of_ceo.png');"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Podcasts List -->
+            <div class="podcasts-list">
+                <div class="podcast-item selected playing" data-podcast="0">
+                    <div class="podcast-content">
+                        <div class="podcast-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/podcast_covers/joe_rogan_experience.png');">
+                            <div class="play-indicator">▶</div>
+                        </div>
+                        <div class="podcast-info">
+                            <div class="podcast-title">The Joe Rogan Experience</div>
+                            <div class="podcast-subtitle">Joe Rogan • #2086 - Elon Musk</div>
+                            <div class="podcast-meta">2h 45m remaining • Latest episode</div>
+                        </div>
+                        <div class="podcast-chevron">›</div>
+                    </div>
+                </div>
+
+                <div class="podcast-item" data-podcast="1">
+                    <div class="podcast-content">
+                        <div class="podcast-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/podcast_covers/impaulsive.png');"></div>
+                        <div class="podcast-info">
+                            <div class="podcast-title">Impaulsive</div>
+                            <div class="podcast-subtitle">Logan Paul • Unfiltered conversations</div>
+                            <div class="podcast-meta">1h 28m • New episode available</div>
+                        </div>
+                        <div class="podcast-chevron">›</div>
+                    </div>
+                </div>
+
+                <div class="podcast-item" data-podcast="2">
+                    <div class="podcast-content">
+                        <div class="podcast-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/podcast_covers/war_room.png');"></div>
+                        <div class="podcast-info">
+                            <div class="podcast-title">War Room</div>
+                            <div class="podcast-subtitle">Andrew Tate • Comedy & hot takes</div>
+                            <div class="podcast-meta">1h 52m • Unfiltered discussions</div>
+                        </div>
+                        <div class="podcast-chevron">›</div>
+                    </div>
+                </div>
+
+                <div class="podcast-item" data-podcast="3">
+                    <div class="podcast-content">
+                        <div class="podcast-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/podcast_covers/past_gas.png');"></div>
+                        <div class="podcast-info">
+                            <div class="podcast-title">Past Gas</div>
+                            <div class="podcast-subtitle">Donut Media • Comedy</div>
+                            <div class="podcast-meta">58m • Weekly episodes</div>
+                        </div>
+                        <div class="podcast-chevron">›</div>
+                    </div>
+                </div>
+
+                <div class="podcast-item" data-podcast="4">
+                    <div class="podcast-content">
+                        <div class="podcast-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/podcast_covers/diary_of_ceo.png');"></div>
+                        <div class="podcast-info">
+                            <div class="podcast-title">The Diary of a CEO</div>
+                            <div class="podcast-subtitle">Steven Bartlett • Business insights</div>
+                            <div class="podcast-meta">1h 15m • Entrepreneur interviews</div>
+                        </div>
+                        <div class="podcast-chevron">›</div>
+                    </div>
+                </div>
+
+                <div class="podcast-item" data-podcast="5">
+                    <div class="podcast-content">
+                        <div class="podcast-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/podcast_covers/nelk_podcast.png');"></div>
+                        <div class="podcast-info">
+                            <div class="podcast-title">The Nelk Podcast</div>
+                            <div class="podcast-subtitle">Full Send • Party stories & interviews</div>
+                            <div class="podcast-meta">1h 32m • Weekly episodes</div>
+                        </div>
+                        <div class="podcast-chevron">›</div>
+                    </div>
+                </div>
+
+                <div class="podcast-item" data-podcast="6">
+                    <div class="podcast-content">
+                        <div class="podcast-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/podcast_covers/tim_ferriss_show.png');"></div>
+                        <div class="podcast-info">
+                            <div class="podcast-title">The Tim Ferriss Show</div>
+                            <div class="podcast-subtitle">Tim Ferriss • Performance optimization</div>
+                            <div class="podcast-meta">1h 45m • World-class performers</div>
+                        </div>
+                        <div class="podcast-chevron">›</div>
+                    </div>
+                </div>
+
+                <div class="podcast-item" data-podcast="7">
+                    <div class="podcast-content">
+                        <div class="podcast-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/podcast_covers/full_send_podcast.png');"></div>
+                        <div class="podcast-info">
+                            <div class="podcast-title">FULL SEND PODCAST</div>
+                            <div class="podcast-subtitle">Nelk Boys • Unfiltered entertainment</div>
+                            <div class="podcast-meta">2h 12m • Latest guest episode</div>
+                        </div>
+                        <div class="podcast-chevron">›</div>
+                    </div>
+                </div>
+
+                <div class="podcast-item" data-podcast="8">
+                    <div class="podcast-content">
+                        <div class="podcast-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/podcast_covers/my_first_million.png');"></div>
+                        <div class="podcast-info">
+                            <div class="podcast-title">My First Million</div>
+                            <div class="podcast-subtitle">Sam Parr & Shaan Puri • Business ideas</div>
+                            <div class="podcast-meta">58m • Startup discussions</div>
+                        </div>
+                        <div class="podcast-chevron">›</div>
+                    </div>
+                </div>
+
+                <div class="podcast-item" data-podcast="9">
+                    <div class="podcast-content">
+                        <div class="podcast-artwork" style="background-image: url('/vehicles/sdd_g82/carplay/podcast_covers/fresh_and_fit.png');"></div>
+                        <div class="podcast-info">
+                            <div class="podcast-title">Fresh & Fit Podcast</div>
+                            <div class="podcast-subtitle">Myron & Fresh • Dating & lifestyle</div>
+                            <div class="podcast-meta">1h 43m • Weekly discussions</div>
+                        </div>
+                        <div class="podcast-chevron">›</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let podcastsState = {
+            selectedPodcastIndex: 0,
+            selectedQueueIndex: 0,
+            inQueueView: false,
+            selectedHeaderIndex: 2, // 0=filters, 1=downloads, 2=more
+            currentView: 'main' // 'main', 'queue', 'episode'
+        };
+
+        function updatePodcastsUI() {
+            if (podcastsState.currentView === 'main') {
+                // Update podcast list selection
+                const podcastItems = document.querySelectorAll('.podcast-item');
+                podcastItems.forEach((item, index) => {
+                    item.classList.toggle('selected', index === podcastsState.selectedPodcastIndex);
+                    item.classList.toggle('highlighted', index === podcastsState.selectedPodcastIndex);
+                });
+
+                // Update queue selection if in queue view
+                const queueItems = document.querySelectorAll('.queue-item');
+                queueItems.forEach((item, index) => {
+                    item.classList.toggle('selected', index === podcastsState.selectedQueueIndex && podcastsState.inQueueView);
+                    item.classList.toggle('highlighted', index === podcastsState.selectedQueueIndex && podcastsState.inQueueView);
+                });
+
+                // Update header controls
+                const headerBtns = document.querySelectorAll('.header-btn');
+                headerBtns.forEach((btn, index) => {
+                    btn.classList.toggle('selected', index === podcastsState.selectedHeaderIndex);
+                });
+
+                // Auto-scroll selected podcast into view
+                const selectedPodcast = podcastItems[podcastsState.selectedPodcastIndex];
+                if (selectedPodcast && !podcastsState.inQueueView) {
+                    selectedPodcast.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                }
+            }
+        }
+
+        function applyWallpaper(wallpaperNum) {
+            if (!wallpaperNum) wallpaperNum = 1;
+            const wallpaperPath = `/vehicles/sdd_g82/carplay/screen_background_${wallpaperNum}.png`;
+            document.body.style.setProperty('background-image', `url('${wallpaperPath}')`, 'important');
+            console.log('Podcasts: Applied wallpaper', wallpaperNum);
+        }
+
+        function handleNavigation(direction) {
+            console.log('Podcasts: Handling navigation:', direction, podcastsState);
+            
+            if (direction === 'left') {
+                if (podcastsState.inQueueView) {
+                    // Navigate through queue items
+                    podcastsState.selectedQueueIndex = Math.max(0, podcastsState.selectedQueueIndex - 1);
+                } else {
+                    // Navigate header controls
+                    podcastsState.selectedHeaderIndex = Math.max(0, podcastsState.selectedHeaderIndex - 1);
+                }
+            } else if (direction === 'right') {
+                if (podcastsState.inQueueView) {
+                    // Navigate through queue items
+                    const queueItems = document.querySelectorAll('.queue-item');
+                    podcastsState.selectedQueueIndex = Math.min(queueItems.length - 1, podcastsState.selectedQueueIndex + 1);
+                } else {
+                    // Navigate header controls
+                    podcastsState.selectedHeaderIndex = Math.min(2, podcastsState.selectedHeaderIndex + 1);
+                }
+            } else if (direction === 'up') {
+                if (podcastsState.inQueueView) {
+                    // Exit queue view, go to podcast list
+                    podcastsState.inQueueView = false;
+                    podcastsState.selectedPodcastIndex = 0;
+                } else {
+                    // Navigate up through podcasts or enter queue
+                    if (podcastsState.selectedPodcastIndex === 0) {
+                        podcastsState.inQueueView = true;
+                        podcastsState.selectedQueueIndex = 0;
+                    } else {
+                        podcastsState.selectedPodcastIndex = Math.max(0, podcastsState.selectedPodcastIndex - 1);
+                    }
+                }
+            } else if (direction === 'down') {
+                if (podcastsState.inQueueView) {
+                    // Exit queue view, go to first podcast
+                    podcastsState.inQueueView = false;
+                    podcastsState.selectedPodcastIndex = 0;
+                } else {
+                    // Navigate down through podcasts
+                    const podcastItems = document.querySelectorAll('.podcast-item');
+                    podcastsState.selectedPodcastIndex = Math.min(podcastItems.length - 1, podcastsState.selectedPodcastIndex + 1);
+                }
+            } else if (direction === 'select') {
+                if (podcastsState.inQueueView) {
+                    console.log('Podcasts: Selected queue item', podcastsState.selectedQueueIndex);
+                    // Could show queue episode details
+                } else {
+                    console.log('Podcasts: Selected podcast', podcastsState.selectedPodcastIndex);
+                    // Could show podcast episodes or start playing
+                }
+            } else if (direction === 'back') {
+                // Exit to home
+                window.parent.postMessage({ type: 'exitToHome' }, '*');
+                return;
+            }
+
+            updatePodcastsUI();
+        }
+
+        // Listen for messages from parent
+        window.addEventListener('message', function(event) {
+            console.log('Podcasts: Received message:', event.data);
+            
+            if (event.data.type === 'updateAppData') {
+                podcastsState = { ...podcastsState, ...event.data.data };
+                updatePodcastsUI();
+                console.log('Podcasts: Updated app data:', podcastsState);
+            } else if (event.data.type === 'navigation') {
+                console.log('Podcasts: Received navigation event:', event.data.direction);
+                handleNavigation(event.data.direction);
+            } else if (event.data.type === 'updateBackground') {
+                if (event.data.wallpaper) {
+                    applyWallpaper(event.data.wallpaper);
+                }
+            }
+        });
+
+        // Initialize
+        updatePodcastsUI();
+        applyWallpaper(1);
+        console.log('Podcasts: iOS-style podcasts app initialized and ready for navigation');
+    </script>
+</body>
+</html>

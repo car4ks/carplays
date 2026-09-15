@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shift Screen</title>
+    <style>
+        @font-face {
+            font-family: 'Digital';
+            src: url('local://local/vehicles/sdd_g82/Screen/digital.ttf');
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #fff;
+            width: 256px;
+            height: 128px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Digital', monospace;
+            /* Simulate pixel grid background, 2x denser with reduced opacity */
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                             linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 4px 4px; /* Remains 2x denser */
+        }
+        
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            padding: 10px;
+            /* Ensure text renders pixelated */
+            image-rendering: pixelated;
+            -ms-interpolation-mode: nearest-neighbor; /* For older IE support */
+        }
+        
+        .data-row {
+            display: flex;
+            align-items: center;
+            font-size: 36px;
+            /* Enhance pixelation effect on text */
+            image-rendering: pixelated;
+        }
+        
+        .icon {
+            width: 36px;
+            height: 36px;
+            margin-right: 7.5px;
+            image-rendering: pixelated;
+        }
+        
+        .value {
+            color: #fff;
+            image-rendering: pixelated;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <div class="data-row">
+            <img src="steerscreen_icon_rpm.png" alt="RPM Icon" class="icon">
+            <span class="value" id="rpm-value">0 rpm</span>
+        </div>
+        <div class="data-row">
+            <img src="steerscreen_icon_speed.png" alt="Speed Icon" class="icon">
+            <span class="value" id="speed-value">0 km/h</span>
+        </div>
+    </div>
+
+    <script>
+        const rpmValue = document.getElementById('rpm-value');
+        const speedValue = document.getElementById('speed-value');
+        
+        function updateDisplay(data) {
+            if (data && data.electrics) {
+                const rpm = Math.round(data.electrics.rpm || 0);
+                const speedKmh = Math.round(data.electrics.wheelspeed * 3.6) || 0; // Convert m/s to km/h
+                rpmValue.textContent = rpm + ' rpm';
+                speedValue.textContent = speedKmh + ' km/h';
+            }
+        }
+        
+        function initialize() {
+            if (typeof beamng !== 'undefined') {
+                beamng.requestData = function() {
+                    return ['electrics'];
+                };
+                beamng.update = function(data) {
+                    updateDisplay(data);
+                };
+            } else {
+                console.log("BeamNG not detected, running in test mode");
+                setInterval(() => {
+                    const testData = {
+                        electrics: {
+                            rpm: Math.random() * 7000,
+                            wheelspeed: Math.random() * 30
+                        }
+                    };
+                    updateDisplay(testData);
+                }, 2000);
+            }
+        }
+        
+        initialize();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phone</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        /* Hide scrollbars */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        * { scrollbar-width: none; -ms-overflow-style: none; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000; color: white; overflow: hidden; 
+            width: 100%; height: 100vh; 
+            position: relative; display: flex; flex-direction: column;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            border-radius: 0 40px 40px 0;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .app-header {
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 40px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0 40px 0 0;
+            position: relative;
+        }
+
+        .app-header-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .phone-tab-bar {
+            height: 100px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 60px;
+        }
+
+        .phone-tab {
+            padding: 16px 40px;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 20px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 140px;
+            text-align: center;
+        }
+
+        .phone-tab.selected {
+            background: rgba(0, 122, 255, 0.3);
+            border-color: #007AFF;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .phone-tab.highlighted {
+            background: rgba(0, 122, 255, 0.4);
+            border-color: #007AFF;
+            color: white;
+            transform: scale(1.08);
+            box-shadow: 0 4px 15px rgba(0, 122, 255, 0.4);
+        }
+
+        .phone-content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+        }
+
+        .phone-panel {
+            display: none;
+        }
+
+        .phone-panel.active {
+            display: block;
+        }
+
+        .phone-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .phone-item {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border-radius: 28px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+            min-height: 120px;
+        }
+
+        .phone-item.selected {
+            border-color: #007AFF;
+            background: rgba(0, 122, 255, 0.15);
+            transform: scale(1.02);
+        }
+
+        .phone-item.highlighted {
+            border-color: #007AFF;
+            background: rgba(0, 122, 255, 0.25);
+            transform: scale(1.04);
+            box-shadow: 0 8px 25px rgba(0, 122, 255, 0.4);
+        }
+
+        .phone-item-name {
+            font-size: 36px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .phone-item-number {
+            font-size: 28px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .phone-item-time {
+            font-size: 22px;
+            color: rgba(255, 255, 255, 0.5);
+            float: right;
+            margin-top: -100px;
+        }
+
+        .phone-item-status.outgoing {
+            color: #007AFF;
+        }
+
+        .phone-item-status.missed {
+            color: #FF3B30;
+        }
+
+        .phone-item-status.answered {
+            color: #34C759;
+        }
+
+        .call-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            backdrop-filter: blur(30px);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            border-radius: 0 40px 40px 0;
+        }
+
+        .call-screen.active {
+            display: flex;
+            animation: slideInFromRight 0.3s ease-out;
+        }
+
+        @keyframes slideInFromRight {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        .call-avatar {
+            width: 240px;
+            height: 240px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 100px;
+            color: white;
+            margin-bottom: 40px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .call-info {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .call-name {
+            font-size: 48px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 16px;
+        }
+
+        .call-number {
+            font-size: 28px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 12px;
+        }
+
+        .call-status {
+            font-size: 24px;
+            color: #007AFF;
+            font-weight: 500;
+        }
+
+        .call-timer {
+            font-size: 32px;
+            color: white;
+            font-weight: 600;
+            margin-top: 12px;
+            font-family: 'SF Mono', 'Monaco', monospace;
+        }
+
+        .call-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .call-button {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: white;
+        }
+
+        .call-button.decline {
+            background: linear-gradient(135deg, #FF3B30 0%, #D70015 100%);
+            box-shadow: 0 8px 20px rgba(255, 59, 48, 0.4);
+        }
+
+        .call-button:hover {
+            transform: scale(1.1);
+        }
+
+        .contact-detail {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            backdrop-filter: blur(30px);
+            display: none;
+            flex-direction: column;
+            z-index: 999;
+            border-radius: 0 40px 40px 0;
+            padding: 50px;
+        }
+
+        .contact-detail.active {
+            display: flex;
+            animation: slideInFromBottom 0.3s ease-out;
+        }
+
+        @keyframes slideInFromBottom {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .contact-header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding-bottom: 40px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .contact-avatar-large {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            color: white;
+            margin: 0 auto 25px;
+        }
+
+        .contact-name-large {
+            font-size: 42px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 12px;
+        }
+
+        .contact-actions {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 50px;
+            gap: 50px;
+        }
+
+        .contact-action {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .contact-action:hover {
+            transform: scale(1.1);
+        }
+
+        .contact-action.selected {
+            transform: scale(1.15);
+        }
+
+        .contact-action-btn {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 45px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .contact-action-btn.call {
+            background: linear-gradient(135deg, #34C759 0%, #248A3D 100%);
+        }
+
+        .contact-action-btn.message {
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+        }
+
+        .contact-action.selected .contact-action-btn {
+            border-color: #007AFF;
+            box-shadow: 0 8px 20px rgba(0, 122, 255, 0.4);
+        }
+
+        .contact-action-label {
+            font-size: 26px;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 600;
+        }
+
+        .contact-info-list {
+            flex: 1;
+        }
+
+        .contact-info-item {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .contact-info-label {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .contact-info-value {
+            font-size: 24px;
+            color: white;
+            font-weight: 500;
+        }
+
+        .dialer-display {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 25px;
+            padding: 32px;
+            margin-bottom: 40px;
+            text-align: center;
+            font-size: 42px;
+            font-weight: 300;
+            color: white;
+            min-height: 80px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dialer-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            max-width: 450px;
+            margin: 50px auto;
+        }
+
+        .dialer-button {
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            color: white;
+            font-size: 32px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dialer-button.selected {
+            background: rgba(0, 122, 255, 0.3);
+            border-color: #007AFF;
+            transform: scale(1.1);
+        }
+
+        .dialer-button.highlighted {
+            background: rgba(0, 122, 255, 0.4);
+            border-color: #007AFF;
+            transform: scale(1.15);
+            box-shadow: 0 4px 15px rgba(0, 122, 255, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-screen">
+        <div class="app-header">
+            <div class="app-header-title">Phone</div>
+        </div>
+        
+        <div class="phone-tab-bar">
+            <div class="phone-tab selected" data-tab="recent">Recents</div>
+            <div class="phone-tab" data-tab="contacts">Contacts</div>
+            <div class="phone-tab" data-tab="dialer">Keypad</div>
+        </div>
+        
+        <div class="phone-content">
+            <div class="phone-panel active" id="phoneRecentPanel">
+                <div class="phone-list">
+                    <div class="phone-item selected" data-contact='{"name":"BeamNG Roadside Assistance","number":"+1 (555) 123-BEAM","avatar":"🚗","status":"missed"}'>
+                        <div class="phone-item-name">BeamNG Roadside Assistance</div>
+                        <div class="phone-item-number">+1 (555) 123-BEAM</div>
+                        <div class="phone-item-status">Missed Call</div>
+                        <div class="phone-item-time">12 min ago</div>
+                    </div>
+                    <div class="phone-item" data-contact='{"name":"Mom","number":"+1 (555) 987-6543","avatar":"❤️","status":"answered"}'>
+                        <div class="phone-item-name">Mom</div>
+                        <div class="phone-item-number">+1 (555) 987-6543</div>
+                        <div class="phone-item-status answered">Answered</div>
+                        <div class="phone-item-time">2 hours ago</div>
+                    </div>
+                    <div class="phone-item" data-contact='{"name":"ETK Service Center","number":"+1 (555) 456-7890","avatar":"🔧","status":"answered"}'>
+                        <div class="phone-item-name">ETK Service Center</div>
+                        <div class="phone-item-number">+1 (555) 456-7890</div>
+                        <div class="phone-item-status answered">Answered</div>
+                        <div class="phone-item-time">Yesterday</div>
+                    </div>
+                    <div class="phone-item" data-contact='{"name":"Cherrier Dealership","number":"+1 (555) 786-5432","avatar":"🚙","status":"answered"}'>
+                        <div class="phone-item-name">Cherrier Dealership</div>
+                        <div class="phone-item-number">+1 (555) 786-5432</div>
+                        <div class="phone-item-status answered">Answered</div>
+                        <div class="phone-item-time">2 days ago</div>
+                    </div>
+                    <div class="phone-item" data-contact='{"name":"Insurance Company","number":"+1 (555) 234-5678","avatar":"📋","status":"missed"}'>
+                        <div class="phone-item-name">Insurance Company</div>
+                        <div class="phone-item-number">+1 (555) 234-5678</div>
+                        <div class="phone-item-status">Missed Call</div>
+                        <div class="phone-item-time">3 days ago</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="phone-panel" id="phoneContactsPanel">
+                <div class="phone-list">
+                    <div class="phone-item" data-contact='{"name":"Alex Johnson","number":"+1 (555) 111-2222","avatar":"👤","email":"alex@email.com","work":"+1 (555) 111-WORK"}'>
+                        <div class="phone-item-name">Alex Johnson</div>
+                        <div class="phone-item-number">+1 (555) 111-2222</div>
+                    </div>
+                    <div class="phone-item" data-contact='{"name":"Automation Mechanic","number":"+1 (555) 333-AUTO","avatar":"🔧","email":"service@automation.com","work":"+1 (555) 333-AUTO"}'>
+                        <div class="phone-item-name">Automation Mechanic</div>
+                        <div class="phone-item-number">+1 (555) 333-AUTO</div>
+                    </div>
+                    <div class="phone-item" data-contact='{"name":"Emergency Services","number":"+1 (911) 911-9111","avatar":"🚨","email":"emergency@services.gov"}'>
+                        <div class="phone-item-name">Emergency Services</div>
+                        <div class="phone-item-number">+1 (911) 911-9111</div>
+                    </div>
+                    <div class="phone-item" data-contact='{"name":"Gavril Parts Store","number":"+1 (555) GAVRIL","avatar":"⚙️","email":"parts@gavril.com","work":"+1 (555) GAVRIL"}'>
+                        <div class="phone-item-name">Gavril Parts Store</div>
+                        <div class="phone-item-number">+1 (555) GAVRIL</div>
+                    </div>
+                    <div class="phone-item" data-contact='{"name":"Work","number":"+1 (555) 555-WORK","avatar":"🏢","email":"office@work.com"}'>
+                        <div class="phone-item-name">Work</div>
+                        <div class="phone-item-number">+1 (555) 555-WORK</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="phone-panel" id="phoneDialerPanel">
+                <div class="dialer-display" id="dialerDisplay"></div>
+                <div class="dialer-grid">
+                    <div class="dialer-button" onclick="dialNumber('1')">1</div>
+                    <div class="dialer-button" onclick="dialNumber('2')">2</div>
+                    <div class="dialer-button" onclick="dialNumber('3')">3</div>
+                    <div class="dialer-button" onclick="dialNumber('4')">4</div>
+                    <div class="dialer-button" onclick="dialNumber('5')">5</div>
+                    <div class="dialer-button" onclick="dialNumber('6')">6</div>
+                    <div class="dialer-button" onclick="dialNumber('7')">7</div>
+                    <div class="dialer-button" onclick="dialNumber('8')">8</div>
+                    <div class="dialer-button" onclick="dialNumber('9')">9</div>
+                    <div class="dialer-button" onclick="dialNumber('*')">*</div>
+                    <div class="dialer-button" onclick="dialNumber('0')">0</div>
+                    <div class="dialer-button" onclick="dialNumber('#')">#</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Call Screen - ONLY RED HANGUP BUTTON -->
+        <div class="call-screen" id="callScreen">
+            <div class="call-avatar" id="callAvatar">📞</div>
+            <div class="call-info">
+                <div class="call-name" id="callName">Contact Name</div>
+                <div class="call-number" id="callNumber">+1 (555) 000-0000</div>
+                <div class="call-status" id="callStatus">Calling...</div>
+                <div class="call-timer" id="callTimer" style="display: none;">00:00</div>
+            </div>
+            <div class="call-controls">
+                <button class="call-button decline" id="declineButton" onclick="endCall()">✕</button>
+            </div>
+        </div>
+        
+        <!-- Contact Detail Screen -->
+        <div class="contact-detail" id="contactDetail">
+            <div class="contact-header">
+                <div class="contact-avatar-large" id="contactAvatarLarge">👤</div>
+                <div class="contact-name-large" id="contactNameLarge">Contact Name</div>
+            </div>
+            
+            <div class="contact-actions">
+                <div class="contact-action" onclick="callContact()">
+                    <div class="contact-action-btn call">📞</div>
+                    <div class="contact-action-label">Call</div>
+                </div>
+                <div class="contact-action" onclick="messageContact()">
+                    <div class="contact-action-btn message">💬</div>
+                    <div class="contact-action-label">Message</div>
+                </div>
+            </div>
+            
+            <div class="contact-info-list">
+                <div class="contact-info-item">
+                    <div class="contact-info-label">Mobile</div>
+                    <div class="contact-info-value" id="contactPhone">+1 (555) 000-0000</div>
+                </div>
+                <div class="contact-info-item" id="contactWorkItem" style="display: none;">
+                    <div class="contact-info-label">Work</div>
+                    <div class="contact-info-value" id="contactWork"></div>
+                </div>
+                <div class="contact-info-item" id="contactEmailItem" style="display: none;">
+                    <div class="contact-info-label">Email</div>
+                    <div class="contact-info-value" id="contactEmail"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let phoneState = {
+            selectedTabIndex: 0,
+            selectedItemIndex: 0,
+            isInTabBar: false,
+            currentView: 'main', // 'main', 'call', 'contact-detail'
+            currentContact: null,
+            selectedActionIndex: 0, // 0=call, 1=message
+            callHistory: [] // Will be loaded from settings
+        };
+
+        let dialedNumber = '';
+        let callTimeout = null;
+        let callStartTime = null;
+        let callTimerInterval = null;
+
+        const elements = {
+            tabs: document.querySelectorAll('.phone-tab'),
+            panels: document.querySelectorAll('.phone-panel'),
+            dialerDisplay: document.getElementById('dialerDisplay'),
+            callScreen: document.getElementById('callScreen'),
+            contactDetail: document.getElementById('contactDetail'),
+            callTimer: document.getElementById('callTimer'),
+            callStatus: document.getElementById('callStatus')
+        };
+
+        // Call history functions
+        function formatTimeAgo(timestamp) {
+            const now = Date.now();
+            const diff = now - timestamp;
+            const minutes = Math.floor(diff / (1000 * 60));
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            
+            if (minutes < 1) return 'Just now';
+            if (minutes < 60) return `${minutes} min ago`;
+            if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+            if (days === 1) return 'Yesterday';
+            if (days < 7) return `${days} days ago`;
+            return new Date(timestamp).toLocaleDateString();
+        }
+
+        function addCallToHistory(contact, type, duration) {
+            const callEntry = {
+                name: contact.name,
+                number: contact.number,
+                avatar: contact.avatar,
+                timestamp: Date.now(),
+                type: type, // 'outgoing', 'incoming', 'missed'
+                duration: duration || 0
+            };
+            
+            // Add to beginning of history
+            phoneState.callHistory.unshift(callEntry);
+            
+            // Limit to 50 calls
+            if (phoneState.callHistory.length > 50) {
+                phoneState.callHistory = phoneState.callHistory.slice(0, 50);
+            }
+            
+            saveCallHistory();
+            updateRecentsDisplay();
+            console.log('Phone: Added call to history:', callEntry);
+        }
+
+        function saveCallHistory() {
+            // Send call history to Lua for saving
+            if (typeof window.beamng !== 'undefined' && window.beamng.sendActiveObjectLua) {
+                const historyJson = JSON.stringify(phoneState.callHistory);
+                window.beamng.sendActiveObjectLua(`
+                    if electrics and electrics.values then
+                        electrics.values.carplayCallHistory = "${historyJson.replace(/"/g, '\\"')}"
+                    end
+                `);
+                console.log('Phone: Sent call history to Lua for saving');
+            }
+        }
+
+        function loadCallHistory() {
+            // Call history will be loaded via updateAppData from Lua
+            console.log('Phone: Waiting for call history from Lua');
+        }
+
+        function updateRecentsDisplay() {
+            const recentPanel = document.getElementById('phoneRecentPanel');
+            const phoneList = recentPanel.querySelector('.phone-list');
+            
+            // Clear existing items
+            phoneList.innerHTML = '';
+            
+            // Add call history items
+            phoneState.callHistory.forEach((call, index) => {
+                const phoneItem = document.createElement('div');
+                phoneItem.className = 'phone-item' + (index === phoneState.selectedItemIndex && phoneState.selectedTabIndex === 0 ? ' selected highlighted' : '');
+                phoneItem.setAttribute('data-contact', JSON.stringify({
+                    name: call.name,
+                    number: call.number,
+                    avatar: call.avatar
+                }));
+                
+                let statusText = '';
+                let statusClass = '';
+                
+                if (call.type === 'outgoing') {
+                    statusText = call.duration > 0 ? `Outgoing (${formatDuration(call.duration)})` : 'Outgoing';
+                    statusClass = 'outgoing';
+                } else if (call.type === 'incoming') {
+                    statusText = call.duration > 0 ? `Incoming (${formatDuration(call.duration)})` : 'Answered';
+                    statusClass = 'answered';
+                } else if (call.type === 'missed') {
+                    statusText = 'Missed Call';
+                    statusClass = 'missed';
+                }
+                
+                phoneItem.innerHTML = `
+                    <div class="phone-item-name">${call.name}</div>
+                    <div class="phone-item-number">${call.number}</div>
+                    <div class="phone-item-status ${statusClass}">${statusText}</div>
+                    <div class="phone-item-time">${formatTimeAgo(call.timestamp)}</div>
+                `;
+                
+                phoneList.appendChild(phoneItem);
+            });
+            
+            // If no call history, show default entries
+            if (phoneState.callHistory.length === 0) {
+                phoneList.innerHTML = `
+                    <div class="phone-item selected" data-contact='{"name":"BeamNG Roadside Assistance","number":"+1 (555) 123-BEAM","avatar":"🚗","status":"missed"}'>
+                        <div class="phone-item-name">BeamNG Roadside Assistance</div>
+                        <div class="phone-item-number">+1 (555) 123-BEAM</div>
+                        <div class="phone-item-status missed">Missed Call</div>
+                        <div class="phone-item-time">12 min ago</div>
+                    </div>
+                    <div class="phone-item" data-contact='{"name":"Mom","number":"+1 (555) 987-6543","avatar":"❤️","status":"answered"}'>
+                        <div class="phone-item-name">Mom</div>
+                        <div class="phone-item-number">+1 (555) 987-6543</div>
+                        <div class="phone-item-status answered">Answered</div>
+                        <div class="phone-item-time">2 hours ago</div>
+                    </div>
+                `;
+            }
+        }
+
+        function formatDuration(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+        function playPhoneAudio() {
+            // Send audio play command to BeamNG audio system
+            if (typeof window.beamng !== 'undefined' && window.beamng.sendActiveObjectLua) {
+                window.beamng.sendActiveObjectLua(`
+                    if electrics and electrics.values then
+                        electrics.values.carplayPhoneAudio = "call.mp3"
+                    end
+                `);
+                console.log('Phone: Started playing call.mp3 via BeamNG');
+            } else {
+                console.log('Phone: BeamNG interface not available');
+            }
+        }
+
+        function stopPhoneAudio() {
+            // Send audio stop command to BeamNG audio system
+            if (typeof window.beamng !== 'undefined' && window.beamng.sendActiveObjectLua) {
+                window.beamng.sendActiveObjectLua(`
+                    if electrics and electrics.values then
+                        electrics.values.carplayStopPhoneAudio = 1
+                    end
+                `);
+                console.log('Phone: Stopped phone audio via BeamNG');
+            }
+        }
+
+        // Timer functions
+        function startCallTimer() {
+            callStartTime = Date.now();
+            elements.callTimer.style.display = 'block';
+            elements.callStatus.style.display = 'none';
+            
+            callTimerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                elements.callTimer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+            
+            console.log('Phone: Started call timer');
+        }
+
+        function stopCallTimer() {
+            if (callTimerInterval) {
+                clearInterval(callTimerInterval);
+                callTimerInterval = null;
+            }
+            elements.callTimer.style.display = 'none';
+            elements.callStatus.style.display = 'block';
+            elements.callStatus.textContent = 'Calling...';
+            callStartTime = null;
+            console.log('Phone: Stopped call timer');
+        }
+
+        function dialNumber(digit) {
+            dialedNumber += digit;
+            elements.dialerDisplay.textContent = dialedNumber;
+        }
+
+        function clearDialer() {
+            dialedNumber = '';
+            elements.dialerDisplay.textContent = '';
+        }
+
+        function showCallScreen(contact) {
+            phoneState.currentView = 'call';
+            phoneState.currentContact = contact;
+            
+            console.log('Phone: showCallScreen called with contact:', contact);
+            
+            document.getElementById('callAvatar').textContent = contact.avatar || '📞';
+            document.getElementById('callName').textContent = contact.name;
+            document.getElementById('callNumber').textContent = contact.number;
+            
+            elements.callScreen.classList.add('active');
+            elements.callStatus.textContent = 'Calling...';
+            
+            console.log('Phone: About to call playPhoneAudio()');
+            // Start playing phone audio
+            playPhoneAudio();
+            
+            console.log('Phone: Starting call to', contact.name);
+        }
+
+        function endCall() {
+            console.log('Phone: endCall() function called');
+            stopPhoneAudio();
+            
+            // Calculate call duration if there was one
+            let duration = 0;
+            if (callStartTime) {
+                duration = Math.floor((Date.now() - callStartTime) / 1000);
+            }
+            
+            stopCallTimer();
+            
+            // Add call to history
+            if (phoneState.currentContact) {
+                addCallToHistory(phoneState.currentContact, 'outgoing', duration);
+            }
+            
+            elements.callScreen.classList.remove('active');
+            phoneState.currentView = 'main';
+            phoneState.currentContact = null;
+            
+            if (callTimeout) {
+                clearTimeout(callTimeout);
+                callTimeout = null;
+            }
+            
+            console.log('Phone: Call ended successfully, duration:', duration, 'seconds');
+        }
+
+        function showContactDetail(contact) {
+            phoneState.currentView = 'contact-detail';
+            phoneState.currentContact = contact;
+            phoneState.selectedActionIndex = 0; // Default to Call button
+            
+            document.getElementById('contactAvatarLarge').textContent = contact.avatar || '👤';
+            document.getElementById('contactNameLarge').textContent = contact.name;
+            document.getElementById('contactPhone').textContent = contact.number;
+            
+            // Show optional fields if they exist
+            const workItem = document.getElementById('contactWorkItem');
+            const emailItem = document.getElementById('contactEmailItem');
+            
+            if (contact.work) {
+                document.getElementById('contactWork').textContent = contact.work;
+                workItem.style.display = 'block';
+            } else {
+                workItem.style.display = 'none';
+            }
+            
+            if (contact.email) {
+                document.getElementById('contactEmail').textContent = contact.email;
+                emailItem.style.display = 'block';
+            } else {
+                emailItem.style.display = 'none';
+            }
+            
+            elements.contactDetail.classList.add('active');
+            updateContactActionSelection();
+            console.log('Phone: Showing contact detail for', contact.name);
+        }
+
+        function updateContactActionSelection() {
+            const actions = document.querySelectorAll('.contact-action');
+            actions.forEach((action, index) => {
+                action.classList.toggle('selected', index === phoneState.selectedActionIndex);
+            });
+        }
+
+        function hideContactDetail() {
+            elements.contactDetail.classList.remove('active');
+            phoneState.currentView = 'main';
+            phoneState.currentContact = null;
+        }
+
+        function callContact() {
+            if (phoneState.currentContact) {
+                // Store contact before hiding detail screen
+                const contactToCall = phoneState.currentContact;
+                hideContactDetail();
+                setTimeout(() => {
+                    showCallScreen(contactToCall);
+                }, 300);
+            }
+        }
+
+        function messageContact() {
+            if (phoneState.currentContact) {
+                console.log('Phone: Opening messages for', phoneState.currentContact.name);
+                // Store contact before hiding detail screen
+                const contactForMessage = phoneState.currentContact;
+                hideContactDetail();
+                // Close phone app and open messages app
+                window.parent.postMessage({ 
+                    type: 'appLaunched', 
+                    appName: 'messages' 
+                }, '*');
+            }
+        }
+
+        function callFromDialer() {
+            if (dialedNumber.length > 0) {
+                const contact = {
+                    name: 'Unknown',
+                    number: dialedNumber,
+                    avatar: '📞'
+                };
+                showCallScreen(contact);
+                clearDialer();
+            }
+        }
+
+        function updateTabSelection() {
+            elements.tabs.forEach((tab, index) => {
+                tab.classList.toggle('selected', index === phoneState.selectedTabIndex);
+                
+                // Always highlight the active tab
+                tab.classList.toggle('highlighted', index === phoneState.selectedTabIndex);
+            });
+        }
+
+        function updatePanelDisplay() {
+            elements.panels.forEach((panel, index) => {
+                panel.classList.toggle('active', index === phoneState.selectedTabIndex);
+            });
+        }
+
+        function updateItemSelection() {
+            const activePanel = document.querySelector('.phone-panel.active');
+            if (activePanel) {
+                const items = activePanel.querySelectorAll('.phone-item, .dialer-button');
+                items.forEach((item, index) => {
+                    item.classList.toggle('selected', index === phoneState.selectedItemIndex);
+                    item.classList.toggle('highlighted', index === phoneState.selectedItemIndex);
+                });
+                
+                // Auto-scroll selected item into view
+                const selectedItem = items[phoneState.selectedItemIndex];
+                if (selectedItem) {
+                    selectedItem.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                }
+            }
+        }
+
+        function updatePhoneUI() {
+            updateTabSelection();
+            updatePanelDisplay();
+            updateItemSelection();
+        }
+
+        function applyWallpaper(wallpaperNum) {
+            if (!wallpaperNum) wallpaperNum = 1;
+            const wallpaperPath = `/vehicles/sdd_g82/carplay/screen_background_${wallpaperNum}.png`;
+            document.body.style.setProperty('background-image', `url('${wallpaperPath}')`, 'important');
+            console.log('Phone: Applied wallpaper', wallpaperNum);
+        }
+
+        function handleNavigation(direction) {
+            console.log('Phone: Handling navigation:', direction, phoneState);
+            
+            // Handle different views
+            if (phoneState.currentView === 'call') {
+                console.log('Phone: In call screen, handling navigation:', direction);
+                // In call screen, select or back both end the call
+                if (direction === 'back' || direction === 'select') {
+                    endCall();
+                }
+                return;
+            }
+            
+            if (phoneState.currentView === 'contact-detail') {
+                console.log('Phone: In contact detail, handling navigation:', direction);
+                if (direction === 'left') {
+                    phoneState.selectedActionIndex = Math.max(0, phoneState.selectedActionIndex - 1);
+                    updateContactActionSelection();
+                } else if (direction === 'right') {
+                    phoneState.selectedActionIndex = Math.min(1, phoneState.selectedActionIndex + 1);
+                    updateContactActionSelection();
+                } else if (direction === 'select') {
+                    if (phoneState.selectedActionIndex === 0) {
+                        callContact(); // Call button
+                    } else {
+                        messageContact(); // Message button
+                    }
+                } else if (direction === 'back') {
+                    hideContactDetail();
+                }
+                return;
+            }
+            
+            // Main phone app navigation
+            if (direction === 'left') {
+                // Switch to previous tab
+                const newTabIndex = Math.max(0, phoneState.selectedTabIndex - 1);
+                if (newTabIndex !== phoneState.selectedTabIndex) {
+                    phoneState.selectedTabIndex = newTabIndex;
+                    phoneState.selectedItemIndex = 0; // Reset to top of new tab
+                    console.log('Phone: Switched to tab', phoneState.selectedTabIndex);
+                }
+            } else if (direction === 'right') {
+                // Switch to next tab
+                const newTabIndex = Math.min(2, phoneState.selectedTabIndex + 1);
+                if (newTabIndex !== phoneState.selectedTabIndex) {
+                    phoneState.selectedTabIndex = newTabIndex;
+                    phoneState.selectedItemIndex = 0; // Reset to top of new tab
+                    console.log('Phone: Switched to tab', phoneState.selectedTabIndex);
+                }
+            } else if (direction === 'up') {
+                // Navigate up within current tab
+                phoneState.selectedItemIndex = Math.max(0, phoneState.selectedItemIndex - 1);
+            } else if (direction === 'down') {
+                // Navigate down within current tab
+                const activePanel = document.querySelector('.phone-panel.active');
+                if (activePanel) {
+                    const items = activePanel.querySelectorAll('.phone-item, .dialer-button');
+                    phoneState.selectedItemIndex = Math.min(items.length - 1, phoneState.selectedItemIndex + 1);
+                }
+            } else if (direction === 'select') {
+                console.log('Phone: Selected item', phoneState.selectedItemIndex, 'in tab', phoneState.selectedTabIndex);
+                
+                if (phoneState.selectedTabIndex === 2) { // Dialer panel
+                    const dialerButtons = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'];
+                    const selectedButton = dialerButtons[phoneState.selectedItemIndex];
+                    if (selectedButton) {
+                        dialNumber(selectedButton);
+                    }
+                } else {
+                    // Handle contact/recent call selection
+                    const activePanel = document.querySelector('.phone-panel.active');
+                    if (activePanel) {
+                        const items = activePanel.querySelectorAll('.phone-item');
+                        const selectedItem = items[phoneState.selectedItemIndex];
+                        if (selectedItem) {
+                            const contactData = selectedItem.getAttribute('data-contact');
+                            if (contactData) {
+                                try {
+                                    const contact = JSON.parse(contactData);
+                                    // Always show contact detail with Call/Message buttons
+                                    showContactDetail(contact);
+                                } catch (e) {
+                                    console.error('Phone: Error parsing contact data', e);
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (direction === 'back') {
+                // Exit to home
+                window.parent.postMessage({ type: 'exitToHome' }, '*');
+            }
+            
+            updatePhoneUI();
+        }
+
+        // Listen for messages from parent
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'updateAppData') {
+                phoneState = { ...phoneState, ...event.data.data };
+                
+                // Load call history if provided
+                if (event.data.data.callHistory) {
+                    phoneState.callHistory = event.data.data.callHistory;
+                    updateRecentsDisplay();
+                }
+                
+                updatePhoneUI();
+            } else if (event.data.type === 'navigation') {
+                handleNavigation(event.data.direction);
+            } else if (event.data.type === 'updateBackground') {
+                if (event.data.wallpaper) {
+                    applyWallpaper(event.data.wallpaper);
+                }
+            }
+        });
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', function() {
+            stopPhoneAudio();
+            stopCallTimer();
+        });
+
+        // Initialize
+        updatePhoneUI();
+        applyWallpaper(1);
+        console.log('Phone: Initialized and ready for navigation events');
+    </script>
+</body>
+</html>

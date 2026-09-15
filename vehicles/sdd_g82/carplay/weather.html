@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000; color: white; overflow: hidden; 
+            width: 100%; height: 100vh; 
+            position: relative; display: flex; flex-direction: column;
+        }
+
+        .weather-screen {
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            border-radius: 0 40px 40px 0;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .app-header {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 40px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0 40px 0 0;
+            position: relative;
+        }
+
+        .app-header-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .app-content {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+        }
+
+        .weather-controls {
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .weather-controls-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .weather-control-grid {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .weather-control-btn {
+            width: 180px;
+            height: 180px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .weather-control-btn.selected {
+            border-color: #007AFF;
+            background: rgba(0, 122, 255, 0.15);
+            transform: scale(1.05);
+        }
+
+        .weather-control-btn.highlighted {
+            border-color: #007AFF;
+            background: rgba(0, 122, 255, 0.25);
+            transform: scale(1.08);
+            box-shadow: 0 8px 25px rgba(0, 122, 255, 0.4);
+        }
+
+        .weather-control-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .weather-control-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="weather-screen">
+        <div class="app-header">
+            <div class="app-header-title">Weather Controls</div>
+        </div>
+        
+        <div class="app-content">
+            <div class="weather-controls">
+                <div class="weather-controls-title">Select Weather Condition</div>
+                <div class="weather-control-grid">
+                    <div class="weather-control-btn selected highlighted" data-weather="clear">
+                        <span class="weather-control-icon">☀️</span>
+                        Clear
+                    </div>
+                    <div class="weather-control-btn" data-weather="drizzle">
+                        <span class="weather-control-icon">🌦️</span>
+                        Drizzle
+                    </div>
+                    <div class="weather-control-btn" data-weather="rain">
+                        <span class="weather-control-icon">🌧️</span>
+                        Rain
+                    </div>
+                    <div class="weather-control-btn" data-weather="heavy_rain">
+                        <span class="weather-control-icon">⛈️</span>
+                        Heavy Rain
+                    </div>
+                    <div class="weather-control-btn" data-weather="thunderstorm">
+                        <span class="weather-control-icon">🌩️</span>
+                        Thunderstorm
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let weatherState = {
+            selectedWeatherIndex: 0
+        };
+
+        const weatherTypes = ["clear", "drizzle", "rain", "heavy_rain", "thunderstorm"];
+
+        function updateWeatherUI() {
+            const weatherControls = document.querySelectorAll('.weather-control-btn');
+            weatherControls.forEach((control, index) => {
+                const isSelected = index === weatherState.selectedWeatherIndex;
+                control.classList.toggle('selected', isSelected);
+                control.classList.toggle('highlighted', isSelected);
+            });
+
+            // Auto-scroll selected item into view
+            const selectedControl = weatherControls[weatherState.selectedWeatherIndex];
+            if (selectedControl) {
+                selectedControl.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }
+        }
+
+        function setWeather(weatherType) {
+            console.log('Weather: Setting weather to', weatherType);
+            
+            // Send weather change message to parent
+            window.parent.postMessage({
+                type: 'setWeather',
+                weatherType: weatherType
+            }, '*');
+            
+            // Also send via BeamNG if available
+            if (typeof window.beamng !== 'undefined' && window.beamng.sendActiveObjectLua) {
+                window.beamng.sendActiveObjectLua(`
+                    if electrics and electrics.values then
+                        electrics.values.weather${weatherType.charAt(0).toUpperCase() + weatherType.slice(1).replace('_', '')} = 1
+                    end
+                `);
+            }
+        }
+
+        function handleNavigation(direction) {
+            console.log('Weather: Handling navigation:', direction, weatherState);
+            
+            if (direction === 'left') {
+                weatherState.selectedWeatherIndex = Math.max(0, weatherState.selectedWeatherIndex - 1);
+            } else if (direction === 'right') {
+                weatherState.selectedWeatherIndex = Math.min(weatherTypes.length - 1, weatherState.selectedWeatherIndex + 1);
+            } else if (direction === 'up' || direction === 'down') {
+                // Up/down don't do anything in horizontal layout, but we could wrap around
+                // For now, just ignore them
+            } else if (direction === 'select') {
+                const selectedWeather = weatherTypes[weatherState.selectedWeatherIndex];
+                if (selectedWeather) {
+                    setWeather(selectedWeather);
+                    console.log('Weather: Applied weather type:', selectedWeather);
+                }
+            } else if (direction === 'back') {
+                // Exit weather app
+                window.parent.postMessage({ type: 'exitToHome' }, '*');
+            }
+            
+            updateWeatherUI();
+        }
+
+        function applyWallpaper(wallpaperNum) {
+            if (!wallpaperNum) wallpaperNum = 1;
+            const wallpaperPath = `/vehicles/sdd_g82/carplay/screen_background_${wallpaperNum}.png`;
+            document.body.style.setProperty('background-image', `url('${wallpaperPath}')`, 'important');
+            console.log('Weather: Applied wallpaper', wallpaperNum);
+        }
+
+        // Listen for messages from parent
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'updateAppData') {
+                weatherState = { ...weatherState, ...event.data.data };
+                updateWeatherUI();
+            } else if (event.data.type === 'navigation') {
+                handleNavigation(event.data.direction);
+            } else if (event.data.type === 'updateBackground') {
+                if (event.data.wallpaper) {
+                    applyWallpaper(event.data.wallpaper);
+                }
+            }
+        });
+
+        // Click handlers for direct interaction
+        document.addEventListener('click', function(event) {
+            const weatherBtn = event.target.closest('.weather-control-btn');
+            if (weatherBtn) {
+                const weatherType = weatherBtn.getAttribute('data-weather');
+                if (weatherType) {
+                    setWeather(weatherType);
+                }
+            }
+        });
+
+        // Initialize
+        updateWeatherUI();
+        applyWallpaper(1);
+        console.log('Weather: Initialized with simple horizontal controls');
+    </script>
+</body>
+</html>

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radar Detector Screen</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 256px;
+            height: 128px;
+            overflow: hidden;
+            background-color: #000;
+        }
+        
+        #radar-container {
+            width: 256px;
+            height: 128px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        svg {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1; /* Lower than speed text */
+        }
+        
+        #speed-value {
+            position: absolute;
+            top: 45px; /* Fixed position */
+            left: 7px;
+            font-family: Arial, sans-serif;
+            font-size: 35px;
+            color: white;
+            text-align: center;
+            width: 70px;
+            z-index: 20; /* Higher z-index to ensure it’s on top */
+        }
+        
+        #speed-unit {
+            position: absolute;
+            bottom: 33px; /* Fixed position */
+            left: 7px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: white;
+            text-align: center;
+            width: 70px;
+            z-index: 20; /* Higher z-index to ensure it’s on top */
+        }
+    </style>
+</head>
+<body>
+    <div id="radar-container">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 646.97" preserveAspectRatio="xMidYMid meet">
+            <!-- Layout -->
+            <g id="Layout">
+                <!-- Background -->
+                <rect id="Background" fill="#3963a3" width="1920" height="646.97"/>
+                
+                <!-- Background Band -->
+                <path id="Background_Band" fill="#0d0d0d" d="M1899.54,59.21H769.9a35.06,35.06,0,0,0-24.08,9.58l-96.69,91.39A53.07,53.07,0,0,0,631.8,199.4h0L618.57,587.66h1263.7a17.27,17.27,0,0,0,17.27-17.27Z"/>
+                
+                <!-- Background Speed -->
+                <g id="Background_Speed">
+                    <rect fill="#0d0d0d" x="14.54" y="174.28" width="610.53" height="419.88" rx="25.12"/>
+                    <path fill="#3963a3" d="M600,180.79a18.61,18.61,0,0,1,18.62,18.61V569.05A18.61,18.61,0,0,1,600,587.66H39.65A18.61,18.61,0,0,1,21,569.05V199.4a18.61,18.61,0,0,1,18.61-18.61H600m0-13H39.65A31.65,31.65,0,0,0,8,199.4V569.05a31.65,31.65,0,0,0,31.61,31.61H600a31.65,31.65,0,0,0,31.62-31.61V199.4A31.65,31.65,0,0,0,600,167.79Z"/>
+                </g>
+                
+                <!-- Text Labels -->
+                <text fill="#fff" font-family="Arial, sans-serif" font-size="105.53px" transform="translate(156.74 136.23)">Speed</text>
+            </g>
+            
+            <!-- Band Layer -->
+            <g id="BandLayer" style="display: none;">
+                <!-- Forward Direction Arrow -->
+                <path id="Forward" fill="#bb2e24" d="M837,481.79h83.56a8,8,0,0,0,8-8V250.33a3.63,3.63,0,0,1,6.2-2.56l79.77,79.77a5,5,0,0,0,8.57-3.55V226.78a8,8,0,0,0-2.42-5.74L888.76,92.2a8,8,0,0,0-11.13-.1l-147.09,139A8.06,8.06,0,0,0,728,237v87.73a5,5,0,0,0,8.47,3.64l85.36-80.9a3.63,3.63,0,0,1,6.13,2.62l.94,223.75A8,8,0,0,0,837,481.79Z"/>
+                
+                <!-- Signal Strength indicators -->
+                <rect id="signal_1" fill="#cbff8a" x="824.25" y="518.8" width="112.04" height="49.12"/>
+                <rect id="signal_2" fill="#e0ff8a" x="953.9" y="518.8" width="102.06" height="49.12"/>
+                <rect id="signal_3" fill="#faff69" x="1077.26" y="518.8" width="105.64" height="49.12"/>
+                <rect id="signal_4" fill="#e8db46" x="1201.52" y="518.8" width="105.64" height="49.12"/>
+                <rect id="signal_5" fill="#e8bd46" x="1327.13" y="518.8" width="105.64" height="49.12"/>
+                <rect id="signal_6" fill="#e88446" x="1453.19" y="518.8" width="105.64" height="49.12"/>
+                <rect id="signal_7" fill="#db3d2e" x="1585.75" y="518.8" width="105.64" height="49.12"/>
+                <rect id="signal_8" fill="#db1a1a" x="1715.62" y="518.8" width="105.64" height="49.12"/>
+                
+                <!-- Band Label and Frequency -->
+                <text id="band-letter" fill="#FFD700" font-family="Arial-Black, Arial" font-weight="600" font-size="200px" x="1070" y="320">X</text>
+                <text id="band-frequency" fill="#FFA500" font-family="Arial-Black, Arial" font-weight="800" font-size="145px" x="1050" y="480">10.520</text>
+                <text id="band-ghz" fill="#FFA500" font-family="Arial-Black, Arial" font-weight="550" font-size="110px" x="1600" y="480">GHz</text>
+            </g>
+
+            <!-- Laser Layer -->
+            <g id="LaserLayer" style="display: none;">
+                <!-- Black Background -->
+                <rect id="Background-2" fill="#000000" width="1920" height="646.97"/>
+                <!-- Laser Shape -->
+                <path id="Laser_Shape" fill="#c00" d="M600,180.79a18.62,18.62,0,0,1,18.62,18.61V603.89A18.62,18.62,0,0,1,600,622.5H39.65A18.61,18.61,0,0,1,21,603.89V199.4a18.61,18.61,0,0,1,18.61-18.61H600M759.65,0H130.05L13,165.08V603.89A26.64,26.64,0,0,0,39.65,630.5H600a26.65,26.65,0,0,0,26.62-26.61v-441Z"/>
+                <text fill="#fff" font-family="Arial, sans-serif" font-size="105.53px" transform="translate(156.74 136.23)">Speed</text>
+                <!-- Laser Text -->
+                <text id="laser-text" fill="#c00" font-family="Arial-Black, Arial" font-weight="800" font-size="151.62px" transform="translate(844.78 376.94)">Laser</text>
+                <!-- Laser Line Group -->
+                <g id="Laser_Line">
+                    <rect id="laser-box" fill="#aaa200" x="1695.49" y="324.84" width="23.21" height="23.21"/>
+                    <line id="laser-line" fill="none" stroke="#aaa200" stroke-miterlimit="10" stroke-width="3px" x1="1404.96" y1="336.45" x2="1704.74" y2="336.45"/>
+                </g>
+            </g>
+        </svg>
+        
+        <!-- Dynamic speed value -->
+        <div id="speed-value">0</div>
+        <div id="speed-unit">mph</div>
+    </div>
+
+    <script>
+        // Band data configuration
+        const bandData = {
+            x: { letter: "X", frequency: "10.520" },
+            k: { letter: "K", frequency: "24.087" },
+            ka: { letter: "Ka", frequency: "34.700" }
+        };
+        
+        // Track variables separately to avoid unnecessary updates
+        let activeBand = "none";
+        let lastSpeedValue = 0;
+        let lastSightValue = -1;
+        let laserTimeout = null;
+        let lastLaserState = 0;
+        let blinkInterval = null; // Track blink interval ID
+        
+        // Initialize signal bars to invisible state
+        function initializeSignalBars() {
+            for (let i = 1; i <= 8; i++) {
+                const bar = document.getElementById('signal_' + i);
+                if (bar) bar.style.opacity = "0";
+            }
+        }
+
+        // Function to update signal bars
+        function updateSignalBars(sightValue) {
+            console.log('Radar Sight Value:', sightValue);
+            
+            let activeBars = 0;
+            if (sightValue > 0) {
+                activeBars = Math.min(8, Math.max(1, Math.ceil(sightValue * 8)));
+            }
+            
+            console.log('Active Bars:', activeBars);
+            
+            for (let i = 1; i <= 8; i++) {
+                const bar = document.getElementById('signal_' + i);
+                if (bar) {
+                    bar.style.opacity = (i <= activeBars) ? "1" : "0";
+                }
+            }
+        }
+
+        // Function to show laser layer for 3 seconds
+        function showLaserLayer() {
+            const laserLayer = document.getElementById('LaserLayer');
+            if (laserLayer) {
+                laserLayer.style.display = "block";
+                if (laserTimeout) clearTimeout(laserTimeout);
+                laserTimeout = setTimeout(() => {
+                    laserLayer.style.display = "none";
+                }, 3000); // 3 seconds
+            }
+        }
+
+        // Function to toggle laser line and box visibility
+        function toggleLaserBlink() {
+            const laserLine = document.getElementById('laser-line');
+            const laserBox = document.getElementById('laser-box');
+            if (laserLine && laserBox) {
+                const isVisible = laserLine.style.visibility !== 'hidden';
+                laserLine.style.visibility = isVisible ? 'hidden' : 'visible';
+                laserBox.style.visibility = isVisible ? 'hidden' : 'visible';
+            }
+        }
+
+        // Start blinking every 667ms (1.5x faster than 1 second)
+        function startBlink() {
+            if (!blinkInterval) {
+                blinkInterval = setInterval(toggleLaserBlink, 667);
+            }
+        }
+
+        // Stop blinking and reset visibility
+        function stopBlink() {
+            if (blinkInterval) {
+                clearInterval(blinkInterval);
+                blinkInterval = null;
+            }
+            const laserLine = document.getElementById('laser-line');
+            const laserBox = document.getElementById('laser-box');
+            if (laserLine && laserBox) {
+                laserLine.style.visibility = 'visible'; // Reset to default
+                laserBox.style.visibility = 'visible'; // Reset to default
+            }
+        }
+
+        // Explicit reset function
+        function reset() {
+            document.getElementById('speed-value').textContent = "0";
+            document.getElementById('BandLayer').style.display = "none";
+            document.getElementById('LaserLayer').style.display = "none";
+            initializeSignalBars();
+            activeBand = "none";
+            lastSpeedValue = 0;
+            lastSightValue = -1;
+            lastLaserState = 0;
+            if (laserTimeout) {
+                clearTimeout(laserTimeout);
+                laserTimeout = null;
+            }
+            stopBlink();
+            startBlink(); // Restart blinking for next use
+        }
+
+        // Start blinking on page load
+        startBlink();
+        
+        // Function to update display with data from BeamNG
+        function updateDisplay(data) {
+            if (!data || !data.electrics) {
+                reset(); // Call reset when no data is received
+                return;
+            }
+            
+            // Handle speed updates
+            const wheelspeed = data.electrics.wheelspeed || 0;
+            const speedMph = Math.round(wheelspeed * 2.23694);
+            if (speedMph !== lastSpeedValue) {
+                document.getElementById('speed-value').textContent = speedMph;
+                lastSpeedValue = speedMph;
+            }
+            
+            // Get band states
+            const xBandActive = data.electrics.xBand > 0;
+            const kBandActive = data.electrics.kBand > 0;
+            const kaBandActive = data.electrics.kaBand > 0;
+            const laserActive = data.electrics.laser > 0;
+            
+            // Trigger laser layer only on transition from 0 to >0
+            if (laserActive && lastLaserState === 0) {
+                showLaserLayer();
+            }
+            lastLaserState = laserActive ? 1 : 0;
+            
+            // Determine active band
+            let newActiveBand = "none";
+            if (kaBandActive) newActiveBand = "ka";
+            else if (kBandActive) newActiveBand = "k";
+            else if (xBandActive) newActiveBand = "x";
+            
+            // Update band display if changed
+            if (newActiveBand !== activeBand) {
+                if (newActiveBand === "none") {
+                    document.getElementById('BandLayer').style.display = "none";
+                    updateSignalBars(0);
+                } else {
+                    const band = bandData[newActiveBand];
+                    document.getElementById('band-letter').textContent = band.letter;
+                    document.getElementById('band-frequency').textContent = band.frequency;
+                    document.getElementById('BandLayer').style.display = "block";
+                }
+                activeBand = newActiveBand;
+            }
+            
+            // Update signal strength bars if band is active
+            if (activeBand !== "none") {
+                const radarSightValue = data.electrics.radarSightValue || 0;
+                if (Math.abs(radarSightValue - lastSightValue) > 0 || lastSightValue === -1) {
+                    updateSignalBars(radarSightValue);
+                    lastSightValue = radarSightValue;
+                }
+            }
+        }
+        
+        // Setup function for initial configuration
+        function setup(data) {
+            reset(); // Call reset to initialize
+        }
+        
+        // Make functions accessible to BeamNG
+        window.updateDisplay = updateDisplay;
+        window.setup = setup;
+        window.reset = reset; // Expose reset function to Lua
+    </script>
+</body>
+</html>

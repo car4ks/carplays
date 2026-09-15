@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  }
+  
+  #cam-overlay {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+  }
+  
+  /* Realistic screen bezel */
+  .screen-frame {
+    fill: #000;
+    stroke: none;
+  }
+  
+  /* Guide lines - smooth continuous lines */
+  .guide-line {
+    fill: none;
+    stroke-width: 7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.9;
+  }
+  
+  /* Realistic color scheme */
+  .red { stroke: #ff4444; filter: drop-shadow(0 0 12px rgba(255,68,68,0.7)); }
+  .yellow { stroke: #ffdd44; filter: drop-shadow(0 0 12px rgba(255,221,68,0.7)); }
+  .green { stroke: #44ff44; filter: drop-shadow(0 0 12px rgba(68,255,68,0.7)); }
+  
+  /* Info overlay */
+  .info-text {
+    fill: #fff;
+    font-size: 22px;
+    font-weight: 600;
+    text-shadow: 0 0 10px rgba(0,0,0,0.9);
+    opacity: 0.85;
+  }
+</style>
+</head>
+<body>
+<svg id="cam-overlay" viewBox="0 0 1680 720" xmlns="http://www.w3.org/2000/svg">
+  <!-- Solid black frame with curved edges -->
+  <defs>
+    <mask id="frameMask">
+      <rect width="1680" height="720" fill="white"/>
+      <rect x="50" y="50" width="1580" height="620" rx="15" ry="15" fill="black"/>
+    </mask>
+  </defs>
+  <rect class="screen-frame" x="0" y="0" width="1680" height="720" rx="20" ry="20" mask="url(#frameMask)"/>
+  
+  <!-- Continuous steering guide lines -->
+  <!-- LEFT SIDE -->
+  <path id="leftRed" class="guide-line red"/>
+  <path id="leftYellow" class="guide-line yellow"/>
+  <path id="leftGreen" class="guide-line green"/>
+  
+  <!-- RIGHT SIDE -->
+  <path id="rightRed" class="guide-line red"/>
+  <path id="rightYellow" class="guide-line yellow"/>
+  <path id="rightGreen" class="guide-line green"/>
+  
+  <!-- Info display -->
+  <text class="info-text" x="840" y="80" text-anchor="middle">REVERSE</text>
+</svg>
+
+<script>
+  // Screen center for vanishing point
+  const centerX = 840;
+  
+  // Screen positions for car width (wider at bottom for 90° FOV)
+  const bottomLeftX = 480;   // Wide at bottom
+  const bottomRightX = 1200;
+  const topConvergeX = 840;  // Converge to center at top
+  
+  // Generate complete smooth path from bottom to top
+  function generateCompletePath(isLeft, steerAngle) {
+    const points = [];
+    const numPoints = 80;
+    
+    // Starting position at bottom (wide)
+    const startX = isLeft ? bottomLeftX : bottomRightX;
+    
+    // Generate points from bottom (0ft) to top (10ft)
+    for (let i = 0; i <= numPoints; i++) {
+      const t = i / numPoints;
+      
+      // Y position: bottom to top (lower horizon)
+      const minY = 660; // Bottom
+      const maxY = 380; // Top (lower horizon - was 200)
+      const y = minY - (minY - maxY) * t;
+      
+      // X position: converge from wide bottom to narrow top
+      const convergence = t * 0.7; // 70% convergence to center
+      const baseX = startX + (topConvergeX - startX) * convergence;
+      
+      // Steering curve: quadratic for smooth turning
+      const steerCurve = steerAngle * 280 * t * t;
+      
+      const x = baseX + steerCurve;
+      points.push([x, y]);
+    }
+    
+    return points;
+  }
+  
+  // Extract segment from full path based on Y coordinates
+  function extractSegment(fullPath, startY, endY) {
+    return fullPath.filter(point => point[1] <= startY && point[1] >= endY);
+  }
+  
+  // Convert points array to SVG path
+  function pointsToPath(points) {
+    if (points.length === 0) return "";
+    
+    let path = `M${points[0][0].toFixed(1)},${points[0][1].toFixed(1)}`;
+    
+    // Use smooth curves instead of straight lines
+    for (let i = 1; i < points.length - 1; i += 2) {
+      const p1 = points[i];
+      const p2 = points[Math.min(i + 1, points.length - 1)];
+      path += ` Q${p1[0].toFixed(1)},${p1[1].toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+    }
+    
+    // Add last point if odd number
+    if (points.length % 2 === 0) {
+      const last = points[points.length - 1];
+      path += ` L${last[0].toFixed(1)},${last[1].toFixed(1)}`;
+    }
+    
+    return path;
+  }
+  
+  const paths = {
+    left: {
+      red: document.getElementById("leftRed"),
+      yellow: document.getElementById("leftYellow"),
+      green: document.getElementById("leftGreen")
+    },
+    right: {
+      red: document.getElementById("rightRed"),
+      yellow: document.getElementById("rightYellow"),
+      green: document.getElementById("rightGreen")
+    }
+  };
+  
+  let currentSteer = 0;
+  let targetSteer = 0;
+  
+  function animateGuide() {
+    // Smooth steering interpolation
+    const smoothing = 0.15;
+    currentSteer += (targetSteer - currentSteer) * smoothing;
+    
+    // Generate ONE complete path for each side from bottom to top
+    const leftFullPath = generateCompletePath(true, currentSteer);
+    const rightFullPath = generateCompletePath(false, currentSteer);
+    
+    // Y coordinate ranges for each color zone (adjusted for lower horizon)
+    const zones = {
+      red: { startY: 660, endY: 600 },    // Bottom zone (0-2ft)
+      yellow: { startY: 600, endY: 500 }, // Middle zone (2-5ft)
+      green: { startY: 500, endY: 380 }   // Top zone (5-10ft)
+    };
+    
+    // Extract and render segments for each color
+    ['red', 'yellow', 'green'].forEach(color => {
+      const leftSegment = extractSegment(leftFullPath, zones[color].startY, zones[color].endY);
+      const rightSegment = extractSegment(rightFullPath, zones[color].startY, zones[color].endY);
+      
+      paths.left[color].setAttribute("d", pointsToPath(leftSegment));
+      paths.right[color].setAttribute("d", pointsToPath(rightSegment));
+    });
+    
+    requestAnimationFrame(animateGuide);
+  }
+  
+  window.updateGuide = function(data) {
+    if (data && typeof data.steering === 'number' && !isNaN(data.steering)) {
+      // Normalize steering input
+      let normalizedSteer = data.steering / 400;
+      targetSteer = Math.max(-2.5, Math.min(2.5, normalizedSteer));
+    } else {
+      targetSteer = 0;
+    }
+  };
+  
+  animateGuide();
+</script>
+</body>
+</html>

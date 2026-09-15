@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000; color: white; overflow: hidden; 
+            width: 100%; height: 100vh; 
+            position: relative; display: flex; flex-direction: column;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .settings-screen {
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            border-radius: 0 40px 40px 0;
+            flex-direction: column;
+            display: flex;
+        }
+
+        .settings-header {
+            height: 80px; 
+            background: rgba(255, 255, 255, 0.1); 
+            backdrop-filter: blur(20px);
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            position: relative;
+            border-radius: 0 40px 0 0; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-center {
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .settings-content {
+            flex: 1; 
+            display: flex; 
+            flex-direction: column;
+            padding: 0; 
+            overflow: hidden;
+        }
+
+        /* Main Settings List */
+        .settings-list {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 60px 80px;
+            gap: 30px;
+        }
+
+        .settings-list.hidden {
+            display: none;
+        }
+
+        .settings-list-item {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 28px;
+            padding: 40px 50px;
+            display: flex;
+            align-items: center;
+            gap: 35px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .settings-list-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateX(10px);
+        }
+
+        .settings-list-item.selected {
+            background: rgba(0, 122, 255, 0.25);
+            border-color: #007AFF;
+            transform: translateX(10px) scale(1.02);
+            box-shadow: 0 12px 35px rgba(0, 122, 255, 0.4);
+        }
+
+        .settings-list-icon {
+            font-size: 48px;
+            flex-shrink: 0;
+        }
+
+        .settings-list-label {
+            font-size: 32px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .settings-list-arrow {
+            margin-left: auto;
+            font-size: 36px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Detail Pages */
+        .settings-detail-page {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            padding: 20px 60px;
+            overflow-y: auto;
+        }
+
+        .settings-detail-page.active {
+            display: flex;
+        }
+
+        .detail-page-title {
+            font-size: 36px;
+            font-weight: 600;
+            margin-bottom: 35px;
+            color: white;
+            text-align: center;
+        }
+
+        /* Wallpaper Page Styles */
+        .wallpaper-grid {
+            width: 100%;
+            max-width: 1200px;
+            height: 300px;
+            overflow: visible;
+            position: relative;
+            margin: 0 auto 60px auto;
+            perspective: 1000px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .wallpaper-track {
+            display: flex;
+            width: auto;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+            will-change: transform;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .wallpaper-slide {
+            position: absolute;
+            width: 400px;
+            height: 260px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+            transform-origin: center;
+        }
+
+        .wallpaper-preview {
+            width: 100%;
+            height: 200px;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            border-radius: 20px;
+            transition: all 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+        }
+
+        .wallpaper-name {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 500;
+            color: white;
+            margin-top: 20px;
+            transition: all 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        .wallpaper-slide[data-position="center"] {
+            z-index: 10;
+            transform: translateX(0) scale(1);
+        }
+
+        .wallpaper-slide[data-position="center"] .wallpaper-preview {
+            border: 4px solid #007aff;
+            box-shadow: 0 20px 50px rgba(0, 122, 255, 0.5),
+                        0 12px 35px rgba(0, 0, 0, 0.4);
+        }
+
+        .wallpaper-slide[data-position="center"] .wallpaper-name {
+            color: #007aff;
+            font-weight: 600;
+            font-size: 22px;
+        }
+
+        .wallpaper-slide[data-position="left"] {
+            z-index: 5;
+            transform: translateX(-280px) scale(0.8);
+            opacity: 0.7;
+        }
+
+        .wallpaper-slide[data-position="right"] {
+            z-index: 5;
+            transform: translateX(280px) scale(0.8);
+            opacity: 0.7;
+        }
+
+        .wallpaper-slide[data-position="far-left"] {
+            z-index: 2;
+            transform: translateX(-450px) scale(0.6);
+            opacity: 0.4;
+        }
+
+        .wallpaper-slide[data-position="far-right"] {
+            z-index: 2;
+            transform: translateX(450px) scale(0.6);
+            opacity: 0.4;
+        }
+
+        .wallpaper-slide[data-position="hidden"] {
+            z-index: 0;
+            transform: translateX(0) scale(0.5);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .wallpaper-dots {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dot.active {
+            background: #007aff;
+            transform: scale(1.3);
+        }
+
+        /* Icon Theme Page Styles */
+        .icon-theme-grid {
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px; 
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .icon-theme-option {
+            background: rgba(255, 255, 255, 0.1); 
+            border-radius: 24px; 
+            padding: 40px;
+            cursor: pointer; 
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border: 3px solid rgba(255, 255, 255, 0.1); 
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .icon-theme-option:hover {
+            transform: translateY(-8px); 
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3); 
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+        }
+
+        .icon-theme-option.selected {
+            border-color: #007AFF; 
+            background: rgba(0, 122, 255, 0.25);
+            transform: translateY(-4px) scale(1.05); 
+            box-shadow: 0 12px 35px rgba(0, 122, 255, 0.6);
+        }
+
+        .theme-preview {
+            margin-bottom: 24px;
+        }
+
+        .preview-icons {
+            display: flex; 
+            justify-content: center; 
+            gap: 20px;
+        }
+
+        .preview-icon {
+            width: 60px; 
+            height: 60px; 
+            border-radius: 12px;
+            background-size: cover; 
+            background-position: center; 
+            background-repeat: no-repeat;
+        }
+
+        .theme-name {
+            font-size: 24px; 
+            font-weight: 600; 
+            color: white;
+        }
+
+        /* Audio Page Styles - ENHANCED */
+        .audio-controls {
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 0;
+        }
+
+        .audio-section {
+            background: transparent;
+            border: none;
+            padding: 35px 40px;
+        }
+
+        .audio-section.selected {
+            border: none;
+            box-shadow: none;
+        }
+
+        .audio-section-title {
+            font-size: 34px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        /* Balance/Fade Control Pad - BIGGER */
+        .balance-fade-container {
+            display: flex;
+            gap: 50px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .balance-fade-pad {
+            position: relative;
+            width: 420px;
+            height: 420px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border-radius: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .balance-fade-pad::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .balance-fade-pad::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .balance-fade-cursor {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            border: 4px solid white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: move;
+            box-shadow: 0 8px 24px rgba(0, 122, 255, 0.7);
+            transition: all 0.15s ease;
+            z-index: 10;
+        }
+
+        .balance-fade-cursor:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        .balance-fade-cursor.active {
+            transform: translate(-50%, -50%) scale(1.15);
+            box-shadow: 0 10px 28px rgba(0, 122, 255, 0.9);
+        }
+
+        .balance-fade-labels {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .balance-fade-label {
+            position: absolute;
+            font-size: 22px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 3px 6px rgba(0, 0, 0, 0.9);
+        }
+
+        .balance-fade-label.front {
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .balance-fade-label.rear {
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .balance-fade-label.left {
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .balance-fade-label.right {
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .balance-fade-info {
+            display: none;
+        }
+
+        .balance-fade-value {
+            display: none;
+        }
+
+        .balance-fade-value-label {
+            display: none;
+        }
+
+        .balance-fade-value-text {
+            display: none;
+        }
+
+        .center-button {
+            display: none;
+        }
+
+        /* Bass Control */
+        .bass-control {
+            display: none;
+        }
+
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+    </style>
+</head>
+<body>
+    <div class="settings-screen">
+        <div class="settings-header">
+            <div class="header-center">Settings</div>
+        </div>
+        
+        <div class="settings-content">
+            <!-- Main Settings List -->
+            <div class="settings-list" id="settingsList">
+                <div class="settings-list-item selected" data-setting="icons" onclick="openSettingDetail('icons')">
+                    <div class="settings-list-icon">🎨</div>
+                    <div class="settings-list-label">Customize Icons</div>
+                    <div class="settings-list-arrow">›</div>
+                </div>
+                
+                <div class="settings-list-item" data-setting="wallpaper" onclick="openSettingDetail('wallpaper')">
+                    <div class="settings-list-icon">🖼️</div>
+                    <div class="settings-list-label">Wallpaper</div>
+                    <div class="settings-list-arrow">›</div>
+                </div>
+                
+                <div class="settings-list-item" data-setting="audio" onclick="openSettingDetail('audio')">
+                    <div class="settings-list-icon">🔊</div>
+                    <div class="settings-list-label">Audio Balance</div>
+                    <div class="settings-list-arrow">›</div>
+                </div>
+            </div>
+            
+            <!-- Customize Icons Detail Page -->
+            <div class="settings-detail-page" id="iconsDetailPage">
+                <h3 class="detail-page-title">Icon Theme</h3>
+                <div class="icon-theme-grid">
+                    <div class="icon-theme-option selected" data-theme="default" onclick="selectIconTheme('default')">
+                        <div class="theme-preview">
+                            <div class="preview-icons">
+                                <div class="preview-icon" style="background-image: url('/vehicles/sdd_g82/carplay/app_icon_spotify.png');"></div>
+                                <div class="preview-icon" style="background-image: url('/vehicles/sdd_g82/carplay/app_icon_maps.png');"></div>
+                                <div class="preview-icon" style="background-image: url('/vehicles/sdd_g82/carplay/app_icon_phone.png');"></div>
+                            </div>
+                        </div>
+                        <div class="theme-name">Default</div>
+                    </div>
+                    <div class="icon-theme-option" data-theme="liquid-glass" onclick="selectIconTheme('liquid-glass')">
+                        <div class="theme-preview">
+                            <div class="preview-icons">
+                                <div class="preview-icon" style="background-image: url('/vehicles/sdd_g82/carplay/app_icon_spotify_clear.png');"></div>
+                                <div class="preview-icon" style="background-image: url('/vehicles/sdd_g82/carplay/app_icon_maps_clear.png');"></div>
+                                <div class="preview-icon" style="background-image: url('/vehicles/sdd_g82/carplay/app_icon_phone_clear.png');"></div>
+                            </div>
+                        </div>
+                        <div class="theme-name">Liquid Glass</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Wallpaper Detail Page -->
+            <div class="settings-detail-page" id="wallpaperDetailPage">
+                <h3 class="detail-page-title">Choose Wallpaper</h3>
+                <div class="wallpaper-grid">
+                    <div class="wallpaper-track" id="wallpaperTrack">
+                        <div class="wallpaper-slide" data-wallpaper="1" onclick="selectWallpaper(1)">
+                            <div class="wallpaper-preview" style="background-image: url('/vehicles/sdd_g82/carplay/screen_background_1.png');"></div>
+                            <div class="wallpaper-name">Default</div>
+                        </div>
+                        
+                        <div class="wallpaper-slide" data-wallpaper="2" onclick="selectWallpaper(2)">
+                            <div class="wallpaper-preview" style="background-image: url('/vehicles/sdd_g82/carplay/screen_background_2.png');"></div>
+                            <div class="wallpaper-name">Ocean</div>
+                        </div>
+                        
+                        <div class="wallpaper-slide" data-wallpaper="3" onclick="selectWallpaper(3)">
+                            <div class="wallpaper-preview" style="background-image: url('/vehicles/sdd_g82/carplay/screen_background_3.png');"></div>
+                            <div class="wallpaper-name">Mountain</div>
+                        </div>
+                        
+                        <div class="wallpaper-slide" data-wallpaper="4" onclick="selectWallpaper(4)">
+                            <div class="wallpaper-preview" style="background-image: url('/vehicles/sdd_g82/carplay/screen_background_4.png');"></div>
+                            <div class="wallpaper-name">City</div>
+                        </div>
+                        
+                        <div class="wallpaper-slide" data-wallpaper="5" onclick="selectWallpaper(5)">
+                            <div class="wallpaper-preview" style="background-image: url('/vehicles/sdd_g82/carplay/screen_background_5.png');"></div>
+                            <div class="wallpaper-name">Sunset</div>
+                        </div>
+                        
+                        <div class="wallpaper-slide" data-wallpaper="6" onclick="selectWallpaper(6)">
+                            <div class="wallpaper-preview" style="background-image: url('/vehicles/sdd_g82/carplay/screen_background_6.png');"></div>
+                            <div class="wallpaper-name">Forest</div>
+                        </div>
+                        
+                        <div class="wallpaper-slide" data-wallpaper="7" onclick="selectWallpaper(7)">
+                            <div class="wallpaper-preview" style="background-image: url('/vehicles/sdd_g82/carplay/screen_background_7.png');"></div>
+                            <div class="wallpaper-name">Space</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="wallpaper-dots" id="wallpaperDots">
+                    <div class="dot active" data-index="0"></div>
+                    <div class="dot" data-index="1"></div>
+                    <div class="dot" data-index="2"></div>
+                    <div class="dot" data-index="3"></div>
+                    <div class="dot" data-index="4"></div>
+                    <div class="dot" data-index="5"></div>
+                    <div class="dot" data-index="6"></div>
+                </div>
+            </div>
+            
+            <!-- Audio Detail Page -->
+            <div class="settings-detail-page" id="audioDetailPage">
+                <div class="audio-controls">
+                    <!-- Balance/Fade Control -->
+                    <div class="audio-section">
+                        <div class="audio-section-title">Speaker Balance</div>
+                        <div class="balance-fade-container">
+                            <div class="balance-fade-pad" id="balanceFadePad">
+                                <div class="balance-fade-labels">
+                                    <div class="balance-fade-label front">Front</div>
+                                    <div class="balance-fade-label rear">Rear</div>
+                                    <div class="balance-fade-label left">Left</div>
+                                    <div class="balance-fade-label right">Right</div>
+                                </div>
+                                <div class="balance-fade-cursor" id="balanceFadeCursor"></div>
+                            </div>
+                            <div class="balance-fade-info">
+                                <div class="balance-fade-value">
+                                    <div class="balance-fade-value-label">Fade</div>
+                                    <div class="balance-fade-value-text" id="fadeValue">Center</div>
+                                </div>
+                                <div class="balance-fade-value">
+                                    <div class="balance-fade-value-label">Balance</div>
+                                    <div class="balance-fade-value-text" id="balanceValue">Center</div>
+                                </div>
+                                <button class="center-button" onclick="centerBalanceFade()">Reset to Center</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let settingsData = {
+            wallpaper: 1,
+            iconTheme: 'default',
+            fade: 50,      // 0 = full rear, 50 = center, 100 = full front
+            balance: 50    // 0 = full left, 50 = center, 100 = full right
+        };
+
+        let settingsNavigation = {
+            currentPage: 'list',
+            selectedListIndex: 0,
+            selectedWallpaperIndex: 0,
+            selectedIconThemeIndex: 0,
+            selectedAudioControl: 0, // 0 = balance pad, 1 = center button
+            totalListItems: 3,
+            totalWallpapers: 7,
+            totalIconThemes: 2,
+            totalAudioControls: 2
+        };
+
+        let currentWallpaperIndex = 0;
+        const settingsOptions = ['icons', 'wallpaper', 'audio'];
+
+        let isDraggingCursor = false;
+        const CURSOR_MOVE_SPEED = 2; // How fast the cursor moves with arrow keys
+
+        function openSettingDetail(settingName) {
+            console.log('Settings: Opening detail page:', settingName);
+            
+            document.getElementById('settingsList').classList.add('hidden');
+            document.getElementById('iconsDetailPage').classList.remove('active');
+            document.getElementById('wallpaperDetailPage').classList.remove('active');
+            document.getElementById('audioDetailPage').classList.remove('active');
+            
+            if (settingName === 'icons') {
+                document.getElementById('iconsDetailPage').classList.add('active');
+                settingsNavigation.currentPage = 'icons';
+            } else if (settingName === 'wallpaper') {
+                document.getElementById('wallpaperDetailPage').classList.add('active');
+                settingsNavigation.currentPage = 'wallpaper';
+                updateCarouselPosition();
+            } else if (settingName === 'audio') {
+                document.getElementById('audioDetailPage').classList.add('active');
+                settingsNavigation.currentPage = 'audio';
+                settingsNavigation.selectedAudioControl = 0; // Start at balance pad
+                updateBalanceFadeDisplay();
+                updateBassDisplay();
+                updateAudioControlSelection();
+            }
+        }
+
+        function returnToList() {
+            console.log('Settings: Returning to list');
+            
+            document.getElementById('settingsList').classList.remove('hidden');
+            document.getElementById('iconsDetailPage').classList.remove('active');
+            document.getElementById('wallpaperDetailPage').classList.remove('active');
+            document.getElementById('audioDetailPage').classList.remove('active');
+            
+            settingsNavigation.currentPage = 'list';
+            updateListSelection();
+        }
+
+        function updateListSelection() {
+            document.querySelectorAll('.settings-list-item').forEach((item, index) => {
+                item.classList.toggle('selected', index === settingsNavigation.selectedListIndex);
+            });
+        }
+
+        // Balance/Fade Control
+        function initBalanceFadePad() {
+            const pad = document.getElementById('balanceFadePad');
+            const cursor = document.getElementById('balanceFadeCursor');
+            const EDGE_PADDING = 25; // Keep cursor 25px away from edges
+            
+            function updateCursorPosition(x, y) {
+                const rect = pad.getBoundingClientRect();
+                
+                // Constrain x and y to stay away from edges
+                const minX = EDGE_PADDING;
+                const maxX = rect.width - EDGE_PADDING;
+                const minY = EDGE_PADDING;
+                const maxY = rect.height - EDGE_PADDING;
+                
+                const constrainedX = Math.max(minX, Math.min(maxX, x));
+                const constrainedY = Math.max(minY, Math.min(maxY, y));
+                
+                const relX = (constrainedX - EDGE_PADDING) / (rect.width - EDGE_PADDING * 2);
+                const relY = (constrainedY - EDGE_PADDING) / (rect.height - EDGE_PADDING * 2);
+                
+                // Balance: 0 (left) to 100 (right)
+                settingsData.balance = Math.round(relX * 100);
+                
+                // Fade: 100 (front/top) to 0 (rear/bottom)
+                settingsData.fade = Math.round((1 - relY) * 100);
+                
+                updateBalanceFadeDisplay();
+                sendBalanceFadeToLua();
+            }
+            
+            function handleMove(e) {
+                if (!isDraggingCursor) return;
+                
+                const rect = pad.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                updateCursorPosition(x, y);
+            }
+            
+            cursor.addEventListener('mousedown', (e) => {
+                isDraggingCursor = true;
+                cursor.classList.add('active');
+                e.preventDefault();
+            });
+            
+            document.addEventListener('mousemove', handleMove);
+            
+            document.addEventListener('mouseup', () => {
+                if (isDraggingCursor) {
+                    isDraggingCursor = false;
+                    cursor.classList.remove('active');
+                }
+            });
+            
+            pad.addEventListener('click', (e) => {
+                if (e.target === cursor) return;
+                
+                const rect = pad.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                updateCursorPosition(x, y);
+            });
+        }
+
+        function updateBalanceFadeDisplay() {
+            const cursor = document.getElementById('balanceFadeCursor');
+            
+            // Update cursor position with padding consideration
+            const EDGE_PADDING_PERCENT = 6; // 6% padding from edges
+            const balancePercent = EDGE_PADDING_PERCENT + (settingsData.balance * (100 - EDGE_PADDING_PERCENT * 2) / 100);
+            const fadePercent = EDGE_PADDING_PERCENT + (settingsData.fade * (100 - EDGE_PADDING_PERCENT * 2) / 100);
+            
+            // Position cursor (fade is inverted for display)
+            const left = balancePercent + '%';
+            const top = (100 - fadePercent) + '%';
+            
+            cursor.style.left = left;
+            cursor.style.top = top;
+        }
+
+        function centerBalanceFade() {
+            settingsData.fade = 50;
+            settingsData.balance = 50;
+            updateBalanceFadeDisplay();
+            sendBalanceFadeToLua();
+        }
+
+        function sendBalanceFadeToLua() {
+            if (typeof window.beamng !== 'undefined' && window.beamng.sendActiveObjectLua) {
+                window.beamng.sendActiveObjectLua(`
+                    if electrics and electrics.values then
+                        electrics.values.equalizerFade = ${settingsData.fade}
+                        electrics.values.equalizerBalance = ${settingsData.balance}
+                    end
+                `);
+                console.log('Settings: Sent to Lua - Fade:', settingsData.fade, 'Balance:', settingsData.balance);
+            }
+        }
+
+        // Bass Control
+        function initBassSlider() {
+            const slider = document.getElementById('bassSlider');
+            const fill = document.getElementById('bassSliderFill');
+            let isDragging = false;
+            
+            function updateBass(e) {
+                const rect = slider.getBoundingClientRect();
+                const x = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+                const percent = Math.round((x / rect.width) * 100);
+                
+                settingsData.bass = percent;
+                updateBassDisplay();
+                sendBassToLua();
+            }
+            
+            slider.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                updateBass(e);
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    updateBass(e);
+                }
+            });
+            
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+        }
+
+        function updateBassDisplay() {
+            const fill = document.getElementById('bassSliderFill');
+            const value = document.getElementById('bassValue');
+            
+            fill.style.width = settingsData.bass + '%';
+            value.textContent = settingsData.bass;
+        }
+
+        function sendBassToLua() {
+            if (typeof window.beamng !== 'undefined' && window.beamng.sendActiveObjectLua) {
+                window.beamng.sendActiveObjectLua(`
+                    if electrics and electrics.values then
+                        electrics.values.equalizerBass = ${settingsData.bass}
+                    end
+                `);
+                console.log('Settings: Sent Bass to Lua:', settingsData.bass);
+            }
+        }
+
+        function updateCarouselPosition() {
+            const slides = document.querySelectorAll('.wallpaper-slide');
+            const dots = document.querySelectorAll('.wallpaper-dots .dot');
+            const totalSlides = slides.length;
+            
+            slides.forEach((slide, index) => {
+                const position = getSlidePosition(index, currentWallpaperIndex, totalSlides);
+                slide.setAttribute('data-position', position);
+            });
+            
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentWallpaperIndex);
+            });
+        }
+
+        function getSlidePosition(slideIndex, centerIndex, totalSlides) {
+            const diff = slideIndex - centerIndex;
+            
+            if (diff === 0) return 'center';
+            if (diff === 1 || (diff === -(totalSlides - 1))) return 'right';
+            if (diff === -1 || (diff === totalSlides - 1)) return 'left';
+            if (diff === 2 || (diff === -(totalSlides - 2))) return 'far-right';
+            if (diff === -2 || (diff === totalSlides - 2)) return 'far-left';
+            
+            return 'hidden';
+        }
+
+        function navigateCarousel(direction) {
+            const totalSlides = 7;
+            
+            if (direction === 'left') {
+                currentWallpaperIndex = currentWallpaperIndex > 0 ? currentWallpaperIndex - 1 : totalSlides - 1;
+            } else if (direction === 'right') {
+                currentWallpaperIndex = currentWallpaperIndex < totalSlides - 1 ? currentWallpaperIndex + 1 : 0;
+            }
+            
+            settingsNavigation.selectedWallpaperIndex = currentWallpaperIndex;
+            updateCarouselPosition();
+        }
+
+        function selectWallpaper(wallpaperNum) {
+            console.log('Settings: Wallpaper selected:', wallpaperNum);
+            
+            settingsData.wallpaper = wallpaperNum;
+            applyWallpaper(wallpaperNum);
+            
+            window.parent.postMessage({
+                type: 'settingChanged',
+                setting: 'wallpaper',
+                value: wallpaperNum
+            }, '*');
+        }
+
+        function selectIconTheme(theme) {
+            console.log('Settings: Icon theme selected:', theme);
+            
+            settingsData.iconTheme = theme;
+            
+            const themeIndex = theme === 'default' ? 0 : 1;
+            settingsNavigation.selectedIconThemeIndex = themeIndex;
+            
+            document.querySelectorAll('.icon-theme-option').forEach(option => {
+                option.classList.toggle('selected', option.dataset.theme === theme);
+            });
+            
+            window.parent.postMessage({
+                type: 'settingChanged',
+                setting: 'iconTheme',
+                value: theme
+            }, '*');
+        }
+
+        function handleNavigation(direction) {
+            console.log('Settings: Handling navigation:', direction, 'Page:', settingsNavigation.currentPage);
+            
+            if (settingsNavigation.currentPage === 'list') {
+                if (direction === 'up') {
+                    settingsNavigation.selectedListIndex = Math.max(0, settingsNavigation.selectedListIndex - 1);
+                    updateListSelection();
+                } else if (direction === 'down') {
+                    settingsNavigation.selectedListIndex = Math.min(2, settingsNavigation.selectedListIndex + 1);
+                    updateListSelection();
+                } else if (direction === 'select') {
+                    const selectedSetting = settingsOptions[settingsNavigation.selectedListIndex];
+                    openSettingDetail(selectedSetting);
+                } else if (direction === 'back') {
+                    console.log('Settings: On main list, exiting to home');
+                    window.parent.postMessage({ type: 'exitToHome' }, '*');
+                }
+            } else {
+                if (direction === 'back') {
+                    console.log('Settings: On detail page, returning to list');
+                    returnToList();
+                } else if (settingsNavigation.currentPage === 'wallpaper') {
+                    if (direction === 'left') {
+                        navigateCarousel('left');
+                    } else if (direction === 'right') {
+                        navigateCarousel('right');
+                    } else if (direction === 'select') {
+                        const newWallpaper = currentWallpaperIndex + 1;
+                        selectWallpaper(newWallpaper);
+                    }
+                } else if (settingsNavigation.currentPage === 'icons') {
+                    if (direction === 'left') {
+                        settingsNavigation.selectedIconThemeIndex = Math.max(0, settingsNavigation.selectedIconThemeIndex - 1);
+                        updateIconThemeSelection();
+                    } else if (direction === 'right') {
+                        settingsNavigation.selectedIconThemeIndex = Math.min(1, settingsNavigation.selectedIconThemeIndex + 1);
+                        updateIconThemeSelection();
+                    } else if (direction === 'select') {
+                        const themes = ['default', 'liquid-glass'];
+                        const newTheme = themes[settingsNavigation.selectedIconThemeIndex];
+                        selectIconTheme(newTheme);
+                    }
+                } else if (settingsNavigation.currentPage === 'audio') {
+                    handleAudioNavigation(direction);
+                }
+            }
+        }
+
+        function handleAudioNavigation(direction) {
+            if (settingsNavigation.selectedAudioControl === 0) {
+                // Balance/Fade pad control
+                if (direction === 'left') {
+                    settingsData.balance = Math.max(0, settingsData.balance - CURSOR_MOVE_SPEED);
+                    updateBalanceFadeDisplay();
+                    sendBalanceFadeToLua();
+                } else if (direction === 'right') {
+                    settingsData.balance = Math.min(100, settingsData.balance + CURSOR_MOVE_SPEED);
+                    updateBalanceFadeDisplay();
+                    sendBalanceFadeToLua();
+                } else if (direction === 'up') {
+                    settingsData.fade = Math.min(100, settingsData.fade + CURSOR_MOVE_SPEED);
+                    updateBalanceFadeDisplay();
+                    sendBalanceFadeToLua();
+                } else if (direction === 'down') {
+                    // Check if we're at bottom, if so navigate to center button
+                    if (settingsData.fade < 10) {
+                        settingsNavigation.selectedAudioControl = 1;
+                        updateAudioControlSelection();
+                    } else {
+                        settingsData.fade = Math.max(0, settingsData.fade - CURSOR_MOVE_SPEED);
+                        updateBalanceFadeDisplay();
+                        sendBalanceFadeToLua();
+                    }
+                }
+            } else if (settingsNavigation.selectedAudioControl === 1) {
+                // Center button
+                if (direction === 'select') {
+                    centerBalanceFade();
+                } else if (direction === 'up') {
+                    settingsNavigation.selectedAudioControl = 0;
+                    updateAudioControlSelection();
+                }
+            }
+        }
+
+        function updateAudioControlSelection() {
+            const audioSections = document.querySelectorAll('.audio-section');
+            const centerButton = document.querySelector('.center-button');
+            
+            audioSections.forEach((section, index) => {
+                if (index === 0 && settingsNavigation.selectedAudioControl === 0) {
+                    section.classList.add('selected');
+                } else if (index === 1 && settingsNavigation.selectedAudioControl === 2) {
+                    section.classList.add('selected');
+                } else {
+                    section.classList.remove('selected');
+                }
+            });
+            
+            if (centerButton) {
+                centerButton.classList.toggle('selected', settingsNavigation.selectedAudioControl === 1);
+            }
+        }
+
+        function updateIconThemeSelection() {
+            document.querySelectorAll('.icon-theme-option').forEach((option, index) => {
+                option.classList.toggle('selected', index === settingsNavigation.selectedIconThemeIndex);
+            });
+        }
+
+        function applyWallpaper(wallpaperNum) {
+            if (!wallpaperNum) wallpaperNum = 1;
+            const wallpaperPath = `/vehicles/sdd_g82/carplay/screen_background_${wallpaperNum}.png`;
+            document.body.style.setProperty('background-image', `url('${wallpaperPath}')`, 'important');
+            console.log('Settings: Applied wallpaper', wallpaperNum);
+        }
+
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'updateSettingsData') {
+                if (event.data.data.settings) {
+                    settingsData = { ...settingsData, ...event.data.data.settings };
+                    
+                    currentWallpaperIndex = (settingsData.wallpaper - 1) || 0;
+                    updateCarouselPosition();
+                    applyWallpaper(settingsData.wallpaper);
+                    
+                    document.querySelectorAll('.icon-theme-option').forEach(option => {
+                        option.classList.toggle('selected', option.dataset.theme === settingsData.iconTheme);
+                    });
+                    
+                    // Update audio controls if data provided
+                    if (settingsData.fade !== undefined) {
+                        updateBalanceFadeDisplay();
+                    }
+                    if (settingsData.bass !== undefined) {
+                        updateBassDisplay();
+                    }
+                }
+                
+                if (event.data.data.settingsNavigation) {
+                    settingsNavigation = { ...settingsNavigation, ...event.data.data.settingsNavigation };
+                    
+                    if (settingsNavigation.currentPage === 'list') {
+                        returnToList();
+                    } else {
+                        openSettingDetail(settingsNavigation.currentPage);
+                    }
+                }
+            } else if (event.data.type === 'navigation') {
+                handleNavigation(event.data.direction);
+            } else if (event.data.type === 'updateBackground') {
+                if (event.data.wallpaper) {
+                    applyWallpaper(event.data.wallpaper);
+                }
+            }
+        });
+
+        // Initialize
+        initBalanceFadePad();
+        initBassSlider();
+        updateCarouselPosition();
+        updateListSelection();
+        applyWallpaper(settingsData.wallpaper);
+        updateBalanceFadeDisplay();
+        updateBassDisplay();
+        updateAudioControlSelection();
+        
+        console.log('Settings: Initialized with ENHANCED Audio Balance & Fade controls');
+    </script>
+</body>
+</html>

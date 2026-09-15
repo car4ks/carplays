@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Configurable spacing values -->
+    <script>
+        const config = {
+            // Vertical line settings
+            verticalLineStart: 10,    // % from top where vertical line starts
+            verticalLineHeight: 90,   // % height of vertical line
+            
+            // Arrow margin settings
+            frontArrowPosition: 25,   // % from top for front arrows
+            rearArrowPosition: 70,    // % from top for rear arrows
+            
+            // Cap settings
+            capWidth: 11,            // Width of end caps in pixels
+            capOffset: 5             // Pixels caps extend from center
+        };
+    </script>
+    
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: monospace;
+            margin: 0;
+            padding: 5px;
+            width: 128px;
+            height: 128px;
+            overflow: hidden;
+        }
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .title {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            font-size: 6px;
+        }
+        .psi {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 6px;
+        }
+        .gauge {
+            position: relative;
+            margin-top: 20px;
+            width: 100%;
+            height: 90px;
+        }
+        .lines {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        .horizontal-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: white;
+        }
+        .vertical-container {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 100%;
+        }
+        .vertical-line {
+            position: absolute;
+            left: 50%;
+            width: 1px;
+            background: white;
+        }
+        .arrow {
+            position: absolute;
+            font-size: 10px;
+            transition: all 0.3s ease;
+            line-height: 1;
+        }
+
+        .value {
+            position: absolute;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .value.FL { left: 5%; }
+        .value.FR { right: 5%; }
+        .value.RL { left: 5%; }
+        .value.RR { right: 5%; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title">preset ride</div>
+        <div class="psi"><span id="psi">196</span> psi</div>
+        <div class="gauge">
+            <div class="lines">
+                <div class="horizontal-line"></div>
+                <div class="vertical-container">
+                    <div class="vertical-line"></div>
+                    <!-- Front arrows and values -->
+                    <div id="arrowFL" class="arrow FL">▶</div>
+                    <div id="arrowFR" class="arrow FR">▶</div>
+                    <div id="valueFL" class="value FL">50</div>
+                    <div id="valueFR" class="value FR">50</div>
+                    <!-- Rear arrows and values -->
+                    <div id="arrowRL" class="arrow RL">▶</div>
+                    <div id="arrowRR" class="arrow RR">▶</div>
+                    <div id="valueRL" class="value RL">50</div>
+                    <div id="valueRR" class="value RR">50</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Apply initial styling based on config
+        function applyConfig() {
+            const vertLine = document.querySelector('.vertical-line');
+            vertLine.style.top = config.verticalLineStart + '%';
+            vertLine.style.height = config.verticalLineHeight + '%';
+            
+            // Apply cap styling dynamically
+            const style = document.createElement('style');
+            style.textContent = `
+                .vertical-line::before,
+                .vertical-line::after {
+                    content: '';
+                    position: absolute;
+                    left: -${config.capOffset}px;
+                    width: ${config.capWidth}px;
+                    height: 1px;
+                    background: white;
+                }
+                .vertical-line::before { top: 0; }
+                .vertical-line::after { bottom: 0; }
+                
+                /* Arrow positions */
+                .arrow.FL, .arrow.FR {
+                    top: ${config.frontArrowPosition}%;
+                }
+                .arrow.RL, .arrow.RR {
+                    top: ${config.rearArrowPosition}%;
+                }
+                .arrow.FL { transform: rotate(0deg); right: 51%; }
+                .arrow.FR { transform: rotate(180deg); left: 51%; }
+                .arrow.RL { transform: rotate(0deg); right: 51%; }
+                .arrow.RR { transform: rotate(180deg); left: 51%; }
+                
+                /* Value positions */
+                .value.FL, .value.FR { top: ${config.frontArrowPosition - 20}%; }
+                .value.RL, .value.RR { top: ${config.rearArrowPosition + 0}%; }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        // Apply config on load
+        applyConfig();
+
+        function updateData(data) {
+            if (!data || !data.electrics) return;
+            
+            const corners = {
+                FL: { base: config.frontArrowPosition },
+                FR: { base: config.frontArrowPosition },
+                RL: { base: config.rearArrowPosition },
+                RR: { base: config.rearArrowPosition }
+            };
+            
+            Object.entries(corners).forEach(([corner, position]) => {
+                const value = data.electrics['airlift' + corner];
+                document.getElementById('value' + corner).textContent = value;
+                
+                const arrow = document.getElementById('arrow' + corner);
+                const maxMove = 15;
+                const move = ((50 - value) / 50) * maxMove;
+                arrow.style.top = (position.base + move) + '%';
+            });
+        }
+    </script>
+</body>
+</html>

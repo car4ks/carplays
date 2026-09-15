@@ -1,0 +1,2242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000; color: white; overflow: hidden; 
+            width: 100%; height: 100vh; 
+            position: relative; display: flex;
+        }
+
+        .spotify-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            border-radius: 40px;
+            overflow: hidden;
+            position: relative;
+            background: #000;
+        }
+
+        .spotify-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            filter: blur(60px) brightness(0.3) saturate(1.8) contrast(1.3);
+            transform: scale(1.1);
+            z-index: 1;
+            opacity: 0;
+            transition: all 0.8s ease;
+        }
+
+        .spotify-container.has-album-background::before {
+            opacity: 1;
+            background-image: var(--album-background);
+        }
+
+        .spotify-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(
+                ellipse at center, 
+                transparent 0%, 
+                rgba(0,0,0,0.2) 50%, 
+                rgba(0,0,0,0.6) 100%
+            );
+            z-index: 2;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+
+        .spotify-container.has-album-background::after {
+            opacity: 1;
+        }
+
+        .sidebar {
+            width: 90px; height: 100%; 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.1) 100%);
+            backdrop-filter: blur(30px) saturate(180%);
+            border-radius: 40px;
+            position: relative;
+            display: flex; flex-direction: column; align-items: center; padding: 25px 0;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35),
+                        0 8px 32px rgba(0, 0, 0, 0.15);
+            margin: 0;
+            overflow: hidden;
+            z-index: 15;
+        }
+
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.45) 20%, rgba(255, 255, 255, 0.45) 80%, transparent 100%);
+            border-radius: 40px 40px 0 0;
+        }
+
+        .sidebar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 1px;
+            background: linear-gradient(0deg, transparent 0%, rgba(255, 255, 255, 0.3) 20%, rgba(255, 255, 255, 0.3) 80%, transparent 100%);
+            border-radius: 0 40px 40px 0;
+        }
+
+        .sidebar-time {
+            font-size: 20px; font-weight: 600; color: white; margin-bottom: 8px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .signal-indicator {
+            display: flex; align-items: center; gap: 4px; margin-bottom: 40px;
+        }
+
+        .signal-bars {
+            display: flex; gap: 2px; align-items: flex-end; height: 18px;
+        }
+
+        .signal-text {
+            font-size: 12px; color: rgba(255,255,255,0.85); margin-left: 8px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .signal-bar {
+            width: 3px; border-radius: 1px; background: rgba(255,255,255,0.85);
+        }
+        .signal-bar:nth-child(1) { height: 6px; }
+        .signal-bar:nth-child(2) { height: 10px; }
+        .signal-bar:nth-child(3) { height: 14px; }
+        .signal-bar:nth-child(4) { height: 18px; }
+
+        .recent-apps {
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+            align-items: center;
+            margin-top: 110px;
+        }
+
+        .recent-app-placeholder {
+            width: 60px; height: 60px; border-radius: 16px; 
+            background: transparent;
+            border: 2px dashed rgba(255, 255, 255, 0.25);
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s ease;
+            opacity: 0.4;
+        }
+
+        .recent-app {
+            width: 60px; height: 60px; border-radius: 16px; 
+            background: rgba(255, 255, 255, 0.18); backdrop-filter: blur(12px);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s ease;
+            background-size: 40px 40px; background-repeat: no-repeat; background-position: center;
+            opacity: 1;
+            transform: translateY(0);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .recent-app:hover { 
+            transform: scale(1.1); 
+            background: rgba(255, 255, 255, 0.25); 
+        }
+
+        .spotify-main {
+            flex: 1;
+            height: 100%;
+            background: transparent;
+            position: relative;
+            overflow: hidden;
+            z-index: 10;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            pointer-events: none;
+        }
+
+        .screen.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
+        }
+
+        .now-playing-screen {
+            display: flex;
+            flex-direction: column;
+            padding: 35px 45px;
+        }
+
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 45px;
+        }
+
+        .library-btn {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(29, 185, 84, 0.4);
+            color: #1DB954;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 14px 20px;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .library-btn.selected {
+            background: rgba(29, 185, 84, 0.25);
+            color: white;
+            border-color: #1DB954;
+            box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.3), 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .playing-next {
+            color: #1DB954;
+            font-size: 20px;
+            font-weight: 600;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+        }
+
+        .now-playing-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 70px;
+        }
+
+        .song-info {
+            flex: 1;
+            text-align: center;
+        }
+
+        .song-title {
+            font-size: 52px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 15px;
+            line-height: 1.2;
+            text-shadow: 0 4px 12px rgba(0,0,0,0.9);
+        }
+
+        .song-artist {
+            font-size: 36px;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 10px;
+            text-shadow: 0 3px 8px rgba(0,0,0,0.8);
+        }
+
+        .song-album {
+            font-size: 0px;
+            color: #1DB954;
+            margin-bottom: 70px;
+            text-shadow: 0 3px 8px rgba(0,0,0,0.8);
+        }
+
+        .playback-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 45px;
+            margin-bottom: 45px;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .control-btn:hover {
+            transform: scale(1.1);
+            color: #1DB954;
+            border-color: rgba(29, 185, 84, 0.5);
+            background: rgba(29, 185, 84, 0.2);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .control-btn.primary {
+            width: 85px;
+            height: 85px;
+            font-size: 42px;
+        }
+
+        .control-btn.secondary {
+            width: 65px;
+            height: 65px;
+            font-size: 32px;
+        }
+
+        .control-btn.selected {
+            color: #1DB954;
+            transform: scale(1.15);
+            background: rgba(29, 185, 84, 0.25);
+            border-color: #1DB954;
+            box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.3), 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .album-art {
+            width: 340px;
+            height: 340px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 130px;
+            color: white;
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+            flex-shrink: 0;
+        }
+
+        .album-art.has-image {
+            color: transparent;
+        }
+
+        .progress-section {
+            margin: 35px 0;
+        }
+
+        .progress-times {
+            display: flex;
+            justify-content: space-between;
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 10px;
+            font-weight: 500;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 4px;
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: white;
+            border-radius: 4px;
+            transition: width 0.1s linear;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
+            width: 0%;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: -4px;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .bottom-controls {
+            display: flex;
+            justify-content: center;
+            gap: 70px;
+            align-items: center;
+        }
+
+        .bottom-controls .control-btn {
+            width: 55px;
+            height: 55px;
+            font-size: 26px;
+            border-radius: 50%;
+        }
+
+        .bottom-controls .control-btn.active {
+            color: #1DB954 !important;
+            background: rgba(29, 185, 84, 0.2) !important;
+            border-color: rgba(29, 185, 84, 0.5) !important;
+        }
+
+        .bottom-controls .control-btn.selected {
+            color: #1DB954;
+            transform: scale(1.25);
+            background: rgba(29, 185, 84, 0.25);
+            border-color: #1DB954;
+            box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.3), 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .control-btn.shuffle-active {
+            color: #1DB954 !important;
+            background: rgba(29, 185, 84, 0.2) !important;
+            border-color: rgba(29, 185, 84, 0.5) !important;
+        }
+
+        .control-btn.shuffle-active:hover {
+            color: #1ed760 !important;
+            background: rgba(29, 185, 84, 0.3) !important;
+            border-color: #1DB954 !important;
+        }
+
+        .control-btn.repeat-active {
+            color: #1DB954 !important;
+            background: rgba(29, 185, 84, 0.2) !important;
+            border-color: rgba(29, 185, 84, 0.5) !important;
+        }
+
+        .control-btn.repeat-active:hover {
+            color: #1ed760 !important;
+            background: rgba(29, 185, 84, 0.3) !important;
+            border-color: #1DB954 !important;
+        }
+
+        .control-btn.liked {
+            color: #1DB954 !important;
+            background: rgba(29, 185, 84, 0.2) !important;
+            border-color: rgba(29, 185, 84, 0.5) !important;
+        }
+
+        .control-btn.liked:hover {
+            color: #1ed760 !important;
+            background: rgba(29, 185, 84, 0.3) !important;
+            border-color: #1DB954 !important;
+        }
+
+        .library-screen {
+            display: flex;
+            flex-direction: column;
+            padding: 35px 45px;
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        .library-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(29, 185, 84, 0.4);
+            color: #1DB954;
+            font-size: 26px;
+            cursor: pointer;
+            margin-right: 25px;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            padding: 12px 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .back-btn.selected {
+            background: rgba(29, 185, 84, 0.25);
+            color: white;
+            border-color: #1DB954;
+            box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.3), 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .library-title {
+            font-size: 42px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 3px 8px rgba(0,0,0,0.8);
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: rgba(64, 64, 64, 0.6);
+            backdrop-filter: blur(30px);
+            border-radius: 50px;
+            padding: 4px;
+            gap: 2px;
+            margin-bottom: 30px;
+            justify-content: center;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-tab {
+            padding: 12px 24px;
+            border-radius: 50px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .nav-tab.selected {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .library-content {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            height: 480px;
+        }
+
+        .shuffle-all-playlists-item {
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
+            border-radius: 16px;
+            padding: 28px 25px;
+            margin-bottom: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            width: 100%;
+            box-shadow: 0 12px 24px rgba(29, 185, 84, 0.3);
+            min-height: 100px;
+            max-height: 100px;
+            flex-shrink: 0;
+            margin-top: 20px;
+        }
+
+        .shuffle-all-playlists-item:hover {
+            background: linear-gradient(135deg, #1ed760 0%, #1DB954 100%);
+            transform: translateX(12px) scale(1.02);
+            box-shadow: 0 16px 32px rgba(29, 185, 84, 0.4);
+        }
+
+        .shuffle-all-playlists-item.selected {
+            background: linear-gradient(135deg, #1ed760 0%, #1DB954 100%);
+            transform: translateX(12px) scale(1.02);
+            box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.5);
+        }
+
+        .shuffle-all-playlists-art {
+            width: 65px;
+            height: 65px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.25);
+            margin-right: 20px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: white;
+        }
+
+        .shuffle-all-playlists-details {
+            flex: 1;
+        }
+
+        .shuffle-all-playlists-name {
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 6px;
+            text-shadow: 0 3px 8px rgba(0,0,0,0.8);
+        }
+
+        .shuffle-all-playlists-meta {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.85);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+        }
+
+        .content-section {
+            display: none;
+            height: 100%;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .home-content {
+            padding: 20px 0;
+        }
+
+        .home-greeting {
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 25px;
+            text-shadow: 0 3px 8px rgba(0,0,0,0.8);
+        }
+
+        .home-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .home-card {
+            height: 120px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .home-card:nth-child(1) { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); }
+        .home-card:nth-child(2) { background: linear-gradient(135deg, #be185d 0%, #ec4899 100%); }
+        .home-card:nth-child(3) { background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); }
+        .home-card:nth-child(4) { background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%); }
+
+        .home-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .home-section-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 15px;
+            text-shadow: 0 3px 8px rgba(0,0,0,0.8);
+        }
+
+        .recent-item, .search-category, .library-category, .playlist-item, .song-item {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .recent-item:hover, .recent-item.selected,
+        .search-category:hover, .search-category.selected,
+        .library-category:hover, .library-category.selected,
+        .playlist-item:hover, .playlist-item.selected,
+        .song-item:hover, .song-item.selected {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(29, 185, 84, 0.4);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .playlist-item.selected, .song-item.selected {
+            background: rgba(29, 185, 84, 0.25);
+            border-color: #1DB954;
+            box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.3), 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .recents-content {
+            padding: 20px 0;
+        }
+
+        .recents-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .recent-item {
+            display: flex;
+            align-items: center;
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .recent-item-art {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .recent-item-info {
+            flex: 1;
+        }
+
+        .recent-item-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 4px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .recent-item-subtitle {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+        }
+
+        .search-content {
+            padding: 20px 0;
+        }
+
+        .search-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .search-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 10px;
+            text-shadow: 0 3px 8px rgba(0,0,0,0.8);
+        }
+
+        .search-categories {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .search-category {
+            display: flex;
+            align-items: center;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .search-category-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
+            margin-right: 20px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .search-category:nth-child(1) .search-category-icon { background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); }
+        .search-category:nth-child(2) .search-category-icon { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+        .search-category:nth-child(3) .search-category-icon { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); }
+
+        .search-category-name {
+            font-size: 24px;
+            font-weight: 600;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .search-category-arrow {
+            margin-left: auto;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 20px;
+        }
+
+        .library-categories {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 20px 0;
+        }
+
+        .library-category {
+            display: flex;
+            align-items: center;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .library-category-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            margin-right: 20px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+
+        .library-category-name {
+            font-size: 24px;
+            font-weight: 600;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .library-category-arrow {
+            margin-left: auto;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 20px;
+        }
+
+        .playlists-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            height: calc(100% - 145px);
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            box-sizing: border-box;
+            padding: 0;
+        }
+
+        .playlist-item {
+            display: flex;
+            align-items: center;
+            border-radius: 16px;
+            padding: 32px 25px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 120px;
+            max-height: 120px;
+            flex-shrink: 0;
+        }
+
+        .playlist-art {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
+            margin-right: 25px;
+            flex-shrink: 0;
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+
+        .playlist-info {
+            flex: 1;
+        }
+
+        .playlist-name {
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 8px;
+            text-shadow: 0 3px 8px rgba(0,0,0,0.8);
+        }
+
+        .playlist-meta {
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+        }
+
+        .nav-indicator {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 28px;
+            margin-left: 20px;
+        }
+
+        .songs-screen {
+            display: flex;
+            flex-direction: column;
+            padding: 35px 45px;
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        .songs-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 35px;
+        }
+
+        .shuffle-all-item {
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
+            border-radius: 16px;
+            padding: 28px 25px;
+            margin-bottom: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            width: 100%;
+            box-shadow: 0 12px 24px rgba(29, 185, 84, 0.3);
+            min-height: 100px;
+            max-height: 100px;
+            flex-shrink: 0;
+        }
+
+        .shuffle-all-item:hover {
+            background: linear-gradient(135deg, #1ed760 0%, #1DB954 100%);
+            transform: translateX(12px) scale(1.02);
+            box-shadow: 0 16px 32px rgba(29, 185, 84, 0.4);
+        }
+
+        .shuffle-all-item.selected {
+            background: linear-gradient(135deg, #1ed760 0%, #1DB954 100%);
+            transform: translateX(12px) scale(1.02);
+            box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.5);
+        }
+
+        .shuffle-all-art {
+            width: 65px;
+            height: 65px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.25);
+            margin-right: 20px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: white;
+        }
+
+        .shuffle-all-details {
+            flex: 1;
+        }
+
+        .shuffle-all-name {
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 6px;
+            text-shadow: 0 3px 8px rgba(0,0,0,0.8);
+        }
+
+        .shuffle-all-meta {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.85);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+        }
+
+        .songs-list {
+            flex: 1;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            box-sizing: border-box;
+            height: 360px;
+        }
+
+        .song-item {
+            display: flex;
+            align-items: center;
+            border-radius: 16px;
+            padding: 28px 25px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 100px;
+            max-height: 100px;
+            flex-shrink: 0;
+        }
+
+        .song-art {
+            width: 65px;
+            height: 65px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
+            margin-right: 20px;
+            flex-shrink: 0;
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        .song-details {
+            flex: 1;
+        }
+
+        .song-name {
+            font-size: 28px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 6px;
+            text-shadow: 0 3px 8px rgba(0,0,0,0.8);
+        }
+
+        .song-artist-album {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+        }
+
+        .playing-indicator {
+            color: #1DB954;
+            font-size: 24px;
+            margin-left: 20px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes signal-pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        
+        .signal-bar.active { animation: signal-pulse 2s infinite; }
+
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 350px;
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+        }
+
+        .empty-state-icon {
+            font-size: 72px;
+            margin-bottom: 20px;
+            opacity: 0.6;
+        }
+
+        .empty-state-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-shadow: 0 3px 8px rgba(0,0,0,0.8);
+        }
+
+        .empty-state-subtitle {
+            font-size: 18px;
+            opacity: 0.8;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+        }
+
+        .status-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(25px);
+            color: #1DB954;
+            padding: 25px 50px;
+            border-radius: 20px;
+            border: 2px solid #1DB954;
+            font-size: 20px;
+            font-weight: 600;
+            text-align: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 25px 50px rgba(29, 185, 84, 0.4);
+        }
+        
+        .status-notification.show {
+            opacity: 1;
+        }
+        
+        .status-notification .status-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="spotify-container" id="spotifyContainer">
+        <div class="sidebar">
+            <div class="sidebar-time" id="sidebarTime">9:41</div>
+            <div class="signal-indicator">
+                <div class="signal-bars strong" id="signalBars">
+                    <div class="signal-bar"></div>
+                    <div class="signal-bar"></div>
+                    <div class="signal-bar"></div>
+                    <div class="signal-bar"></div>
+                </div>
+                <div class="signal-text" id="signalText">5G</div>
+            </div>
+            
+            <div class="recent-apps" id="recentApps">
+            </div>
+        </div>
+        
+        <div class="spotify-main">
+            <div class="screen" id="nowPlayingScreen">
+                <div class="now-playing-screen">
+                    <div class="top-nav">
+                        <button class="library-btn" id="libraryBtn">← Library</button>
+                        <div class="playing-next">Playing Next</div>
+                    </div>
+                    
+                    <div class="now-playing-content">
+                        <div class="song-info">
+                            <div class="song-title" id="currentSongTitle">No Music Playing</div>
+                            <div class="song-artist" id="currentSongArtist"></div>
+                            <div class="song-album" id="currentSongAlbum"></div>
+                            
+                            <div class="playback-controls">
+                                <button class="control-btn secondary" id="prevBtn">⏮</button>
+                                <button class="control-btn primary selected" id="playPauseBtn">▶</button>
+                                <button class="control-btn secondary" id="nextBtn">⏭</button>
+                            </div>
+                            
+                            <div class="progress-section">
+                                <div class="progress-times">
+                                    <span id="currentTime">0:00</span>
+                                    <span id="totalTime">0:00</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="bottom-controls">
+                                <button class="control-btn" id="shuffleBtn">🔀</button>
+                                <button class="control-btn" id="repeatBtn">🔁</button>
+                                <button class="control-btn" id="likeBtn">♡</button>
+                                <button class="control-btn" id="moreBtn">⋯</button>
+                            </div>
+                        </div>
+                        
+                        <div class="album-art" id="albumArt">🎵</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="screen" id="libraryScreen">
+                <div class="library-screen">
+                    <div class="library-header">
+                        <button class="back-btn" id="libraryBackBtn">← Back</button>
+                        <div class="library-title">Music</div>
+                    </div>
+                    
+                    <div class="library-content">
+                        <div class="content-section active" id="libraryContent">
+                            <button class="shuffle-all-playlists-item" id="shuffleAllPlaylistsBtn">
+                                <div class="shuffle-all-playlists-art">🔀</div>
+                                <div class="shuffle-all-playlists-details">
+                                    <div class="shuffle-all-playlists-name">Shuffle All Playlists</div>
+                                    <div class="shuffle-all-playlists-meta">Play songs from all playlists in random order</div>
+                                </div>
+                                <div class="nav-indicator">▶</div>
+                            </button>
+                            
+                            <div class="playlists-list" id="playlistsList">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="screen" id="songsScreen">
+                <div class="songs-screen">
+                    <div class="songs-header">
+                        <button class="back-btn" id="songsBackBtn">← Back</button>
+                        <div class="library-title" id="playlistTitle">Playlist Name</div>
+                    </div>
+                    
+                    <button class="shuffle-all-item" id="shuffleAllBtn">
+                        <div class="shuffle-all-art">🔀</div>
+                        <div class="shuffle-all-details">
+                            <div class="shuffle-all-name">Shuffle Play</div>
+                            <div class="shuffle-all-meta">Play all songs in random order</div>
+                        </div>
+                        <div class="nav-indicator">▶</div>
+                    </button>
+                    
+                    <div class="songs-list" id="songsList">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-notification" id="statusNotification">
+        <div class="status-icon" id="statusIcon">🔀</div>
+        <div id="statusMessage">Shuffle is now enabled</div>
+    </div>
+
+    <script>
+        let appState = {
+            currentScreen: null,  // Start with null, will be determined by music state
+            navigationLevel: 'main',
+            libraryNavigationMode: 'playlists',
+            selectedContentIndex: 0,
+            selectedSongIndex: 0,
+            selectedMainControlIndex: 1,
+            selectedBottomControlIndex: 0,
+            autoScrollEnabled: true,
+            currentPlaylist: null,
+            playlists: [],
+            likedSongs: [],
+            currentViewSongs: [],
+            isPlaying: false,
+            shuffle: false,
+            repeat: 'off',
+            musicData: {},
+            recentApps: [],
+            iconTheme: 'default',
+            hasInitialized: false  // Track if we've received first data
+        };
+
+        const appIconMapping = {
+            default: {
+                music: '/vehicles/sdd_g82/carplay/app_icon_spotify.png',
+                maps: '/vehicles/sdd_g82/carplay/app_icon_maps.png',
+                phone: '/vehicles/sdd_g82/carplay/app_icon_phone.png',
+                messages: '/vehicles/sdd_g82/carplay/app_icon_messages.png',
+                weather: '/vehicles/sdd_g82/carplay/app_icon_weather.png',
+                settings: '/vehicles/sdd_g82/carplay/app_icon_settings.png',
+                calendar: '/vehicles/sdd_g82/carplay/app_icon_calendar.png',
+                podcasts: '/vehicles/sdd_g82/carplay/app_icon_podcasts.png',
+                audiobooks: '/vehicles/sdd_g82/carplay/app_icon_audiobooks.png',
+                news: '/vehicles/sdd_g82/carplay/app_icon_news.png'
+            },
+            'liquid-glass': {
+                music: '/vehicles/sdd_g82/carplay/app_icon_spotify_clear.png',
+                maps: '/vehicles/sdd_g82/carplay/app_icon_maps_clear.png',
+                phone: '/vehicles/sdd_g82/carplay/app_icon_phone_clear.png',
+                messages: '/vehicles/sdd_g82/carplay/app_icon_messages_clear.png',
+                weather: '/vehicles/sdd_g82/carplay/app_icon_weather_clear.png',
+                settings: '/vehicles/sdd_g82/carplay/app_icon_settings_clear.png',
+                calendar: '/vehicles/sdd_g82/carplay/app_icon_calendar_clear.png',
+                podcasts: '/vehicles/sdd_g82/carplay/app_icon_podcasts_clear.png',
+                audiobooks: '/vehicles/sdd_g82/carplay/app_icon_audiobooks_clear.png',
+                news: '/vehicles/sdd_g82/carplay/app_icon_news_clear.png'
+            }
+        };
+
+        const elements = {
+            sidebarTime: document.getElementById('sidebarTime'),
+            signalText: document.getElementById('signalText'),
+            signalBars: document.getElementById('signalBars'),
+            recentApps: document.getElementById('recentApps'),
+            nowPlayingScreen: document.getElementById('nowPlayingScreen'),
+            libraryScreen: document.getElementById('libraryScreen'),
+            songsScreen: document.getElementById('songsScreen'),
+            libraryBtn: document.getElementById('libraryBtn'),
+            navTabs: [],
+            libraryBackBtn: document.getElementById('libraryBackBtn'),
+            songsBackBtn: document.getElementById('songsBackBtn'),
+            currentSongTitle: document.getElementById('currentSongTitle'),
+            currentSongArtist: document.getElementById('currentSongArtist'),
+            currentSongAlbum: document.getElementById('currentSongAlbum'),
+            albumArt: document.getElementById('albumArt'),
+            playPauseBtn: document.getElementById('playPauseBtn'),
+            prevBtn: document.getElementById('prevBtn'),
+            nextBtn: document.getElementById('nextBtn'),
+            shuffleBtn: document.getElementById('shuffleBtn'),
+            repeatBtn: document.getElementById('repeatBtn'),
+            likeBtn: document.getElementById('likeBtn'),
+            moreBtn: document.getElementById('moreBtn'),
+            currentTime: document.getElementById('currentTime'),
+            totalTime: document.getElementById('totalTime'),
+            progressFill: document.getElementById('progressFill'),
+            libraryContent: document.getElementById('libraryContent'),
+            playlistsList: document.getElementById('playlistsList'),
+            shuffleAllPlaylistsBtn: document.getElementById('shuffleAllPlaylistsBtn'),
+            playlistTitle: document.getElementById('playlistTitle'),
+            shuffleAllBtn: document.getElementById('shuffleAllBtn'),
+            songsList: document.getElementById('songsList'),
+            spotifyContainer: document.getElementById('spotifyContainer'),
+            statusNotification: document.getElementById('statusNotification'),
+            statusIcon: document.getElementById('statusIcon'),
+            statusMessage: document.getElementById('statusMessage')
+        };
+
+        let progressUpdateInterval = null;
+        let lastKnownProgress = 0;
+        let isProgressActive = false;
+
+        function startProgressUpdates() {
+            if (progressUpdateInterval) {
+                clearInterval(progressUpdateInterval);
+            }
+            
+            isProgressActive = true;
+            
+            progressUpdateInterval = setInterval(() => {
+                if (appState.isPlaying && appState.musicData.currentTime && appState.musicData.totalTime) {
+                    updateProgressBarDisplay();
+                }
+            }, 100);
+            
+            console.log("Progress updates started");
+        }
+
+        function stopProgressUpdates() {
+            if (progressUpdateInterval) {
+                clearInterval(progressUpdateInterval);
+                progressUpdateInterval = null;
+            }
+            isProgressActive = false;
+            console.log("Progress updates stopped");
+        }
+
+        function updateProgressBarDisplay() {
+            if (!appState.musicData.currentTime || !appState.musicData.totalTime) {
+                elements.progressFill.style.width = '0%';
+                elements.currentTime.textContent = '0:00';
+                elements.totalTime.textContent = '0:00';
+                return;
+            }
+
+            const currentSeconds = parseTime(appState.musicData.currentTime);
+            const totalSeconds = parseTime(appState.musicData.totalTime);
+            
+            if (totalSeconds > 0) {
+                const progress = Math.min((currentSeconds / totalSeconds) * 100, 100);
+                
+                elements.progressFill.style.width = progress + '%';
+                elements.currentTime.textContent = appState.musicData.currentTime;
+                elements.totalTime.textContent = appState.musicData.totalTime;
+                
+                lastKnownProgress = progress;
+            }
+        }
+
+        function determineInitialScreen() {
+            // If music is playing or there's a current song with valid info, show now playing
+            const hasMusicInfo = appState.musicData.currentSong && 
+                                 appState.musicData.currentSong !== "No Music Playing" &&
+                                 appState.musicData.currentSong !== "";
+            
+            if (appState.isPlaying || hasMusicInfo) {
+                console.log("Spotify: Opening on Now Playing screen - music is active");
+                return 'nowPlaying';
+            } else {
+                console.log("Spotify: Opening on Library screen - no music playing");
+                return 'library';
+            }
+        }
+
+        function showStatusNotification(icon, message) {
+            elements.statusIcon.textContent = icon;
+            elements.statusMessage.textContent = message;
+            elements.statusNotification.classList.add('show');
+            setTimeout(() => {
+                elements.statusNotification.classList.remove('show');
+            }, 2000);
+            console.log("Spotify: Showed status notification:", message);
+        }
+
+        function parseGameJSON(jsonString) {
+            if (!jsonString || jsonString === '[]' || jsonString === '{}' || jsonString === '' || jsonString === 'null') {
+                return [];
+            }
+            try {
+                const parsed = JSON.parse(jsonString);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+                console.warn('Failed to parse JSON:', jsonString, e);
+                return [];
+            }
+        }
+
+        function autoScrollToSelected(container, selectedIndex, itemHeight = 120) {
+            if (!container) {
+                console.log("AUTOSCROLL: No container found");
+                return;
+            }
+            
+            requestAnimationFrame(() => {
+                console.log(`AUTOSCROLL: Scrolling to index ${selectedIndex} in container with ${container.children.length} items`);
+                
+                const containerHeight = container.clientHeight;
+                const scrollTop = container.scrollTop;
+                const itemTop = selectedIndex * itemHeight;
+                const itemBottom = itemTop + itemHeight;
+                const viewTop = scrollTop;
+                const viewBottom = scrollTop + containerHeight;
+                
+                let needsScroll = false;
+                let targetScrollTop = scrollTop;
+                
+                if (itemTop < viewTop + 60) {
+                    targetScrollTop = Math.max(0, itemTop - 60);
+                    needsScroll = true;
+                } else if (itemBottom > viewBottom - 60) {
+                    targetScrollTop = itemBottom - containerHeight + 60;
+                    needsScroll = true;
+                }
+                
+                if (needsScroll) {
+                    container.scrollTo({
+                        top: targetScrollTop,
+                        behavior: 'smooth'
+                    });
+                    console.log(`AUTOSCROLL: EXECUTED - Container scrolled to ${targetScrollTop}`);
+                }
+            });
+        }
+
+        function showScreen(screenName) {
+            console.log("Spotify: Switching to screen:", screenName);
+            
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            
+            const targetScreen = document.getElementById(screenName + 'Screen');
+            if (targetScreen) {
+                targetScreen.classList.add('active');
+                appState.currentScreen = screenName;
+                
+                if (screenName === 'nowPlaying') {
+                    appState.navigationLevel = 'main';
+                    appState.selectedMainControlIndex = 1;
+                } else if (screenName === 'library') {
+                    appState.navigationLevel = 'library';
+                    appState.libraryNavigationMode = 'playlists';
+                    appState.selectedContentIndex = 0;
+                    renderPlaylists();
+                } else if (screenName === 'songs') {
+                    appState.selectedSongIndex = 0;
+                    renderSongs();
+                }
+                
+                updateAllSelections();
+            }
+        }
+
+        function handleLibraryNavigation(direction) {
+            console.log('LIBRARY NAV:', direction, 'Mode:', appState.libraryNavigationMode, 'Index:', appState.selectedContentIndex);
+            
+            if (appState.libraryNavigationMode === 'back') {
+                if (direction === 'select') {
+                    showScreen('nowPlaying');
+                } else if (direction === 'down') {
+                    appState.libraryNavigationMode = 'playlists';
+                    appState.selectedContentIndex = 0;
+                }
+            } else if (appState.libraryNavigationMode === 'playlists') {
+                if (direction === 'up') {
+                    if (appState.selectedContentIndex === 0) {
+                        appState.libraryNavigationMode = 'back';
+                    } else {
+                        appState.selectedContentIndex = Math.max(0, appState.selectedContentIndex - 1);
+                        updatePlaylistSelection();
+                        
+                        if (appState.selectedContentIndex > 0) {
+                            autoScrollToSelected(elements.playlistsList, appState.selectedContentIndex - 1, 132);
+                        }
+                    }
+                } else if (direction === 'down') {
+                    const maxIndex = appState.playlists.length;
+                    appState.selectedContentIndex = Math.min(maxIndex, appState.selectedContentIndex + 1);
+                    updatePlaylistSelection();
+                    
+                    if (appState.selectedContentIndex > 0) {
+                        autoScrollToSelected(elements.playlistsList, appState.selectedContentIndex - 1, 132);
+                    }
+                } else if (direction === 'select') {
+                    if (appState.selectedContentIndex === 0) {
+                        shuffleAllPlaylists();
+                    } else {
+                        const playlist = appState.playlists[appState.selectedContentIndex - 1];
+                        if (playlist) {
+                            openPlaylist(playlist);
+                        }
+                    }
+                } else if (direction === 'back') {
+                    // Only go to Now Playing if there's actual music
+                    const hasMusicInfo = appState.musicData.currentSong && 
+                                         appState.musicData.currentSong !== "No Music Playing" &&
+                                         appState.musicData.currentSong !== "";
+                    
+                    if (appState.isPlaying || hasMusicInfo) {
+                        showScreen('nowPlaying');
+                    } else {
+                        // No music playing, exit to CarPlay home
+                        exitToCarPlayHome();
+                    }
+                }
+            }
+        }
+
+        function updatePlaylistSelection() {
+            elements.shuffleAllPlaylistsBtn.classList.toggle('selected', appState.selectedContentIndex === 0);
+            
+            const items = elements.playlistsList.querySelectorAll('.playlist-item');
+            items.forEach((item, index) => {
+                item.classList.toggle('selected', index + 1 === appState.selectedContentIndex);
+            });
+        }
+
+        function shuffleAllPlaylists() {
+            console.log("Spotify: Shuffling all playlists");
+            
+            const regularPlaylists = appState.playlists.filter(p => p.id !== 'likedsongs');
+            
+            if (regularPlaylists.length > 0) {
+                const randomPlaylist = regularPlaylists[Math.random() * regularPlaylists.length | 0];
+                
+                sendMusicCommand('shuffleAll', {
+                    playlistId: randomPlaylist.id
+                });
+                
+                showScreen('nowPlaying');
+            } else {
+                console.log("Spotify: No playlists available to shuffle");
+                const likedSongs = appState.playlists.find(p => p.id === 'likedsongs');
+                if (likedSongs) {
+                    sendMusicCommand('shuffleAll', {
+                        playlistId: likedSongs.id
+                    });
+                    showScreen('nowPlaying');
+                }
+            }
+        }
+
+        function updateBlurredBackground() {
+            if (appState.musicData.albumArt && appState.musicData.hasSongs) {
+                console.log("Setting album background:", appState.musicData.albumArt);
+                elements.spotifyContainer.style.setProperty('--album-background', `url(${appState.musicData.albumArt})`);
+                elements.spotifyContainer.classList.add('has-album-background');
+            } else {
+                console.log("Clearing album background");
+                elements.spotifyContainer.style.removeProperty('--album-background');
+                elements.spotifyContainer.classList.remove('has-album-background');
+            }
+        }
+
+        function handleSongsNavigation(direction) {
+            const totalItems = (appState.currentViewSongs ? appState.currentViewSongs.length : 0) + 1;
+            
+            if (direction === 'up') {
+                appState.selectedSongIndex = Math.max(0, appState.selectedSongIndex - 1);
+                updateSongSelection();
+                if (appState.selectedSongIndex > 0) {
+                    autoScrollToSelected(elements.songsList, appState.selectedSongIndex - 1, 112);
+                }
+            } else if (direction === 'down') {
+                appState.selectedSongIndex = Math.min(totalItems - 1, appState.selectedSongIndex + 1);
+                updateSongSelection();
+                if (appState.selectedSongIndex > 0) {
+                    autoScrollToSelected(elements.songsList, appState.selectedSongIndex - 1, 112);
+                }
+            } else if (direction === 'select') {
+                if (appState.selectedSongIndex === 0) {
+                    shufflePlaylist();
+                } else {
+                    playSelectedSong();
+                }
+            } else if (direction === 'back') {
+                showScreen('library');
+                appState.libraryNavigationMode = 'playlists';
+                appState.selectedContentIndex = 0;
+                renderPlaylists();
+            }
+        }
+
+        function handleNowPlayingNavigation(direction) {
+            if (appState.navigationLevel === 'library') {
+                if (direction === 'select') {
+                    showLibraryScreen();
+                } else if (direction === 'down') {
+                    appState.navigationLevel = 'main';
+                    appState.selectedMainControlIndex = 1;
+                }
+            } else if (appState.navigationLevel === 'main') {
+                if (direction === 'left') {
+                    appState.selectedMainControlIndex = Math.max(0, appState.selectedMainControlIndex - 1);
+                } else if (direction === 'right') {
+                    appState.selectedMainControlIndex = Math.min(2, appState.selectedMainControlIndex + 1);
+                } else if (direction === 'up') {
+                    appState.navigationLevel = 'library';
+                } else if (direction === 'down') {
+                    appState.navigationLevel = 'bottom';
+                    appState.selectedBottomControlIndex = 0;
+                } else if (direction === 'select') {
+                    executeMainControl();
+                }
+            } else if (appState.navigationLevel === 'bottom') {
+                if (direction === 'left') {
+                    appState.selectedBottomControlIndex = Math.max(0, appState.selectedBottomControlIndex - 1);
+                } else if (direction === 'right') {
+                    appState.selectedBottomControlIndex = Math.min(3, appState.selectedBottomControlIndex + 1);
+                } else if (direction === 'up') {
+                    appState.navigationLevel = 'main';
+                    appState.selectedMainControlIndex = 1;
+                } else if (direction === 'select') {
+                    executeBottomControl();
+                }
+            }
+            
+            if (direction === 'back') {
+                exitToCarPlayHome();
+            }
+        }
+
+        function handleNavigation(direction) {
+            console.log('=== NAVIGATION EVENT ===', direction, 'Screen:', appState.currentScreen);
+            
+            if (appState.currentScreen === 'nowPlaying') {
+                handleNowPlayingNavigation(direction);
+                updateAllSelections();
+            } else if (appState.currentScreen === 'library') {
+                handleLibraryNavigation(direction);
+                updateControlSelection();
+                updateNavTabs();
+            } else if (appState.currentScreen === 'songs') {
+                handleSongsNavigation(direction);
+                updateControlSelection();
+            }
+        }
+
+        function renderPlaylists() {
+            const container = elements.playlistsList;
+            container.innerHTML = '';
+            
+            if (!appState.playlists || appState.playlists.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎵</div>
+                        <div class="empty-state-title">No Music Found</div>
+                        <div class="empty-state-subtitle">Install music mod files to get started</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            appState.playlists.forEach((playlist, index) => {
+                const item = document.createElement('div');
+                item.className = `playlist-item`;
+                item.onclick = () => openPlaylist(playlist);
+                
+                item.innerHTML = `
+                    <div class="playlist-art" style="background-image: url('${playlist.coverImage || ''}');"></div>
+                    <div class="playlist-info">
+                        <div class="playlist-name">${playlist.name || 'Unknown Playlist'}</div>
+                        <div class="playlist-meta">Playlist • ${playlist.songCount || 0} songs</div>
+                    </div>
+                    <div class="nav-indicator">›</div>
+                `;
+                
+                container.appendChild(item);
+            });
+            
+            setTimeout(() => {
+                updateContentSelection();
+            }, 50);
+        }
+
+        function renderSongs() {
+            const container = elements.songsList;
+            const titleElement = elements.playlistTitle;
+            
+            if (appState.currentPlaylist) {
+                titleElement.textContent = appState.currentPlaylist.name || 'Playlist';
+            }
+            
+            container.innerHTML = '';
+            
+            if (!appState.currentViewSongs || appState.currentViewSongs.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎵</div>
+                        <div class="empty-state-title">No Songs Found</div>
+                        <div class="empty-state-subtitle">This playlist appears to be empty</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            appState.currentViewSongs.forEach((song, index) => {
+                const item = document.createElement('div');
+                item.className = `song-item`;
+                item.onclick = () => playSong(song, index);
+                
+                const isCurrentlyPlaying = appState.musicData.currentSongId === song.id && appState.isPlaying;
+                
+                item.innerHTML = `
+                    <div class="song-art" style="background-image: url('${song.art || ''}');"></div>
+                    <div class="song-details">
+                        <div class="song-name">${song.title || 'Unknown Song'}</div>
+                        <div class="song-artist-album">${song.artist || 'Unknown Artist'}</div>
+                    </div>
+                    ${isCurrentlyPlaying ? '<div class="playing-indicator">♪</div>' : '<div class="nav-indicator">›</div>'}
+                `;
+                
+                container.appendChild(item);
+            });
+            
+            setTimeout(() => {
+                updateSongSelection();
+            }, 50);
+        }
+
+        function openPlaylist(playlist) {
+            console.log("Spotify: Opening playlist:", playlist.name, "ID:", playlist.id);
+            
+            appState.currentPlaylist = playlist;
+            appState.selectedSongIndex = 0;
+            
+            sendMusicCommand('loadPlaylistSongs', {
+                playlistId: playlist.id,
+                playlistName: playlist.name
+            });
+            
+            showScreen('songs');
+        }
+
+        function executeMainControl() {
+            if (appState.selectedMainControlIndex === 0) {
+                previousTrack();
+            } else if (appState.selectedMainControlIndex === 1) {
+                playPause();
+            } else if (appState.selectedMainControlIndex === 2) {
+                nextTrack();
+            }
+        }
+
+        function executeBottomControl() {
+            if (appState.selectedBottomControlIndex === 0) {
+                toggleShuffle();
+            } else if (appState.selectedBottomControlIndex === 1) {
+                toggleRepeat();
+            } else if (appState.selectedBottomControlIndex === 2) {
+                toggleLike();
+            } else if (appState.selectedBottomControlIndex === 3) {
+                showLibraryScreen();
+            }
+        }
+
+        function showLibraryScreen() {
+            showScreen('library');
+        }
+
+        function exitToCarPlayHome() {
+            console.log("Spotify: ===== EXITING TO CARPLAY HOME =====");
+            console.log("Spotify: Exiting to CarPlay home - music should continue playing");
+            
+            stopProgressUpdates();
+            
+            elements.spotifyContainer.classList.remove('has-album-background');
+            elements.spotifyContainer.style.removeProperty('--album-background');
+            
+            console.log("Spotify: Sending exitToHome message to parent");
+            
+            window.parent.postMessage({
+                type: 'exitToHome',
+                preserveMusic: true,
+                fromApp: 'music'
+            }, '*');
+            
+            console.log("Spotify: ===== EXIT MESSAGE SENT =====");
+        }
+
+        function playSong(song, index) {
+            sendMusicCommand('playSong', {
+                playlistId: appState.currentPlaylist.id,
+                songIndex: index,
+                songId: song.id
+            });
+            showScreen('nowPlaying');
+        }
+
+        function playSelectedSong() {
+            if (appState.currentViewSongs && appState.currentViewSongs.length > 0) {
+                const songIndex = appState.selectedSongIndex - 1;
+                const song = appState.currentViewSongs[songIndex];
+                if (song) {
+                    playSong(song, songIndex);
+                }
+            }
+        }
+
+        function shufflePlaylist() {
+            sendMusicCommand('shuffleAll', {
+                playlistId: appState.currentPlaylist.id
+            });
+            showScreen('nowPlaying');
+        }
+
+        function playPause() { sendMusicCommand('playPause'); }
+        function previousTrack() { sendMusicCommand('previous'); }
+        function nextTrack() { sendMusicCommand('next'); }
+        
+        function toggleShuffle() { 
+            console.log("SHUFFLE TOGGLE: Toggling shuffle state");
+            sendMusicCommand('shuffle');
+            
+            appState.shuffle = !appState.shuffle;
+            updateControls();
+        }
+        
+        function toggleRepeat() { 
+            console.log("REPEAT TOGGLE: Toggling repeat state");
+            sendMusicCommand('repeat');
+            
+            const repeatModes = ['off', 'all', 'track'];
+            const currentIndex = repeatModes.indexOf(appState.repeat);
+            const nextIndex = (currentIndex + 1) % repeatModes.length;
+            appState.repeat = repeatModes[nextIndex];
+            updateControls();
+        }
+        
+        function toggleLike() { 
+            console.log("LIKE TOGGLE: Starting optimistic update");
+            
+            const currentSongId = appState.musicData.currentSongId;
+            if (currentSongId) {
+                const isCurrentlyLiked = appState.likedSongs && appState.likedSongs.some(song => song.id === currentSongId);
+                
+                if (isCurrentlyLiked) {
+                    appState.likedSongs = appState.likedSongs.filter(song => song.id !== currentSongId);
+                    console.log("OPTIMISTIC: Removed from liked songs");
+                } else {
+                    if (!appState.likedSongs) appState.likedSongs = [];
+                    appState.likedSongs.push({ id: currentSongId });
+                    console.log("OPTIMISTIC: Added to liked songs");
+                }
+                
+                updateControls();
+                sendMusicCommand('like');
+            } else {
+                sendMusicCommand('like');
+            }
+        }
+
+        function sendMusicCommand(command, data = {}) {
+            if (typeof window.beamng !== 'undefined' && window.beamng.sendActiveObjectLua) {
+                if (command === 'loadPlaylistSongs' && data.playlistId) {
+                    window.beamng.sendActiveObjectLua(`
+                        if electrics and electrics.values then
+                            electrics.values.carplayLibraryCommand = "loadPlaylistSongs"
+                            electrics.values.carplayLibraryPlaylistId = "${data.playlistId}"
+                        end
+                    `);
+                } else if (command === 'playSong' && data.playlistId && data.songIndex !== undefined) {
+                    window.beamng.sendActiveObjectLua(`
+                        if electrics and electrics.values then
+                            electrics.values.carplayLibraryCommand = "playSong"
+                            electrics.values.carplayLibraryPlaylistId = "${data.playlistId}"
+                            electrics.values.carplayLibrarySongIndex = ${data.songIndex}
+                            ${data.songId ? `electrics.values.carplayLibrarySongId = "${data.songId}"` : ''}
+                        end
+                    `);
+                } else if (command === 'shuffleAll' && data.playlistId) {
+                    window.beamng.sendActiveObjectLua(`
+                        if electrics and electrics.values then
+                            electrics.values.carplayLibraryCommand = "shuffleAll"
+                            electrics.values.carplayLibraryPlaylistId = "${data.playlistId}"
+                        end
+                    `);
+                } else if (['playPause', 'next', 'previous', 'repeat', 'like', 'shuffle'].includes(command)) {
+                    const mapping = {
+                        playPause: 'musicPlayPause',
+                        next: 'musicNext',
+                        previous: 'musicPrevious',
+                        repeat: 'musicRepeatToggle',
+                        like: 'musicToggleCurrentLike',
+                        shuffle: 'musicShuffleToggle'
+                    };
+                    window.beamng.sendActiveObjectLua(`
+                        if electrics and electrics.values then
+                            electrics.values.${mapping[command]} = 1
+                        end
+                    `);
+                }
+            }
+            
+            window.parent.postMessage({
+                type: 'libraryCommand',
+                command: command,
+                ...data
+            }, '*');
+        }
+
+        function updateContentSelection() {
+            if (appState.currentScreen === 'library') {
+                updatePlaylistSelection();
+            }
+        }
+
+        function updateAllSelections() {
+            updateControlSelection();
+            updateNavTabs();
+            updateContentSelection();
+            updateSongSelection();
+        }
+
+        function updateControlSelection() {
+            elements.libraryBtn.classList.toggle('selected', appState.navigationLevel === 'library');
+            elements.libraryBackBtn.classList.toggle('selected', appState.libraryNavigationMode === 'back');
+            elements.songsBackBtn.classList.toggle('selected', appState.currentScreen === 'songs' && appState.selectedSongIndex === -1);
+            
+            const mainControls = [elements.prevBtn, elements.playPauseBtn, elements.nextBtn];
+            mainControls.forEach((btn, index) => {
+                btn.classList.toggle('selected', 
+                    index === appState.selectedMainControlIndex && appState.navigationLevel === 'main');
+            });
+            
+            const bottomControls = [elements.shuffleBtn, elements.repeatBtn, elements.likeBtn, elements.moreBtn];
+            bottomControls.forEach((btn, index) => {
+                btn.classList.toggle('selected', 
+                    index === appState.selectedBottomControlIndex && appState.navigationLevel === 'bottom');
+            });
+        }
+
+        function updateNavTabs() {
+            if (appState.currentScreen === 'library') {
+                elements.navTabs.forEach((tab, index) => {
+                    tab.classList.remove('selected');
+                    if (index === appState.selectedNavTab && appState.libraryNavigationMode === 'tabs') {
+                        tab.classList.add('selected');
+                    }
+                });
+            }
+        }
+
+        function updateSongSelection() {
+            elements.shuffleAllBtn.classList.toggle('selected', appState.selectedSongIndex === 0);
+            
+            const items = elements.songsList.querySelectorAll('.song-item');
+            items.forEach((item, index) => {
+                item.classList.toggle('selected', index + 1 === appState.selectedSongIndex);
+            });
+        }
+
+        function updateNowPlaying() {
+            const music = appState.musicData;
+            
+            elements.currentSongTitle.textContent = music.currentSong || 'No Music Playing';
+            elements.currentSongArtist.textContent = music.artist || '';
+            elements.currentSongAlbum.textContent = music.albumArt ? 'Current Album' : '';
+            
+            if (music.albumArt) {
+                elements.albumArt.style.backgroundImage = `url(${music.albumArt})`;
+                elements.albumArt.classList.add('has-image');
+                elements.albumArt.textContent = '';
+            } else {
+                elements.albumArt.style.backgroundImage = '';
+                elements.albumArt.classList.remove('has-image');
+                elements.albumArt.textContent = '🎵';
+            }
+            
+            elements.playPauseBtn.textContent = appState.isPlaying ? '⏸' : '▶';
+            
+            if (appState.isPlaying) {
+                if (!isProgressActive) {
+                    startProgressUpdates();
+                }
+            } else {
+                if (isProgressActive) {
+                    stopProgressUpdates();
+                }
+            }
+            
+            updateProgressBarDisplay();
+            updateControls();
+            updateBlurredBackground();
+        }
+
+        function updateControls() {
+            if (appState.shuffle) {
+                elements.shuffleBtn.classList.add('shuffle-active');
+                elements.shuffleBtn.classList.add('active');
+            } else {
+                elements.shuffleBtn.classList.remove('shuffle-active');
+                elements.shuffleBtn.classList.remove('active');
+            }
+            
+            if (appState.repeat !== 'off') {
+                elements.repeatBtn.classList.add('repeat-active');
+                elements.repeatBtn.classList.add('active');
+            } else {
+                elements.repeatBtn.classList.remove('repeat-active');
+                elements.repeatBtn.classList.remove('active');
+            }
+            
+            if (appState.repeat === 'track') {
+                elements.repeatBtn.textContent = '🔂';
+            } else {
+                elements.repeatBtn.textContent = '🔁';
+            }
+            
+            const isLikedFromArray = appState.likedSongs && appState.likedSongs.some && appState.likedSongs.some(song => song.id === appState.musicData.currentSongId);
+            const isLikedFromLua = appState.musicData.currentSongLiked === true || appState.musicData.currentSongLiked === 1;
+            const isLiked = isLikedFromArray || isLikedFromLua;
+            
+            if (isLiked) {
+                elements.likeBtn.textContent = '♥';
+                elements.likeBtn.classList.add('liked');
+                elements.likeBtn.classList.add('active');
+            } else {
+                elements.likeBtn.textContent = '♡';
+                elements.likeBtn.classList.remove('liked');
+                elements.likeBtn.classList.remove('active');
+            }
+        }
+
+        function parseTime(timeStr) {
+            if (!timeStr || timeStr === "0:00") return 0;
+            const parts = timeStr.split(':');
+            if (parts.length === 2) {
+                return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+            }
+            return 0;
+        }
+
+        function updateTime() {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = now.getMinutes();
+            
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            
+            const timeStr = hours + ':' + (minutes < 10 ? '0' : '') + minutes;
+            elements.sidebarTime.textContent = timeStr;
+        }
+
+        function updateSignal() {
+            const signalTypes = ['3G', '4G', '5G'];
+            const currentIndex = Math.floor(Math.random() * signalTypes.length);
+            elements.signalText.textContent = signalTypes[currentIndex];
+        }
+
+        function updateRecentAppsDisplay() {
+            const recentAppsContainer = elements.recentApps;
+            if (!recentAppsContainer) return;
+            
+            recentAppsContainer.innerHTML = '';
+            
+            if (appState.recentApps.length === 0) {
+                for (let i = 0; i < 3; i++) {
+                    const placeholderDiv = document.createElement('div');
+                    placeholderDiv.className = 'recent-app-placeholder';
+                    recentAppsContainer.appendChild(placeholderDiv);
+                }
+                return;
+            }
+            
+            appState.recentApps.forEach((appName, index) => {
+                const recentAppDiv = document.createElement('div');
+                recentAppDiv.className = 'recent-app';
+                
+                const iconSet = appIconMapping[appState.iconTheme] || appIconMapping.default;
+                const iconPath = iconSet[appName] || iconSet.music;
+                recentAppDiv.style.backgroundImage = `url('${iconPath}')`;
+                
+                recentAppsContainer.appendChild(recentAppDiv);
+            });
+        }
+
+        elements.libraryBtn.addEventListener('click', showLibraryScreen);
+        elements.libraryBackBtn.addEventListener('click', () => showScreen('nowPlaying'));
+        elements.songsBackBtn.addEventListener('click', () => {
+            showScreen('library');
+            appState.libraryNavigationMode = 'playlists';
+            renderPlaylists();
+        });
+
+        elements.playPauseBtn.addEventListener('click', playPause);
+        elements.prevBtn.addEventListener('click', previousTrack);
+        elements.nextBtn.addEventListener('click', nextTrack);
+        elements.shuffleBtn.addEventListener('click', toggleShuffle);
+        elements.repeatBtn.addEventListener('click', toggleRepeat);
+        elements.likeBtn.addEventListener('click', toggleLike);
+        elements.shuffleAllBtn.addEventListener('click', shufflePlaylist);
+        elements.shuffleAllPlaylistsBtn.addEventListener('click', shuffleAllPlaylists);
+
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'updateMusicData') {
+                const data = event.data.data;
+                
+                const prevShuffle = appState.shuffle;
+                const prevRepeat = appState.repeat;
+                const prevIsPlaying = appState.isPlaying;
+                const prevCurrentTime = appState.musicData.currentTime;
+                
+                appState.musicData = { ...appState.musicData, ...data };
+                appState.isPlaying = data.isPlaying || false;
+                appState.repeat = data.repeatMode || 'off';
+                
+                if (data.shuffle !== undefined) {
+                    appState.shuffle = data.shuffle;
+                }
+                
+                // Parse playlists FIRST before determining initial screen
+                if (data.playlists) {
+                    let parsedPlaylists = [];
+                    if (typeof data.playlists === 'string') {
+                        parsedPlaylists = parseGameJSON(data.playlists);
+                    } else if (Array.isArray(data.playlists)) {
+                        parsedPlaylists = data.playlists;
+                    }
+                    appState.playlists = parsedPlaylists;
+                }
+                
+                // Parse liked songs
+                if (data.likedSongs !== undefined) {
+                    let parsedLikedSongs = [];
+                    if (typeof data.likedSongs === 'string') {
+                        parsedLikedSongs = parseGameJSON(data.likedSongs);
+                    } else if (Array.isArray(data.likedSongs)) {
+                        parsedLikedSongs = data.likedSongs;
+                    }
+                    appState.likedSongs = parsedLikedSongs;
+                }
+                
+                // Determine initial screen on first data load (AFTER data is processed)
+                if (!appState.hasInitialized) {
+                    appState.hasInitialized = true;
+                    const initialScreen = determineInitialScreen();
+                    showScreen(initialScreen);
+                    console.log("Spotify: Initial screen determined:", initialScreen);
+                }
+                
+                if (data.shuffle !== undefined && data.shuffle !== prevShuffle) {
+                    const shuffleMessage = data.shuffle ? "Shuffle is now enabled" : "Shuffle is now disabled";
+                    showStatusNotification("🔀", shuffleMessage);
+                }
+                
+                if (data.repeatMode !== undefined && data.repeatMode !== prevRepeat) {
+                    let repeatMessage = "";
+                    let repeatIcon = "🔁";
+                    
+                    switch (data.repeatMode) {
+                        case 'off':
+                            repeatMessage = "Repeat is now off";
+                            break;
+                        case 'all':
+                            repeatMessage = "Repeat all is now enabled";
+                            break;
+                        case 'track':
+                            repeatMessage = "Repeat current track is enabled";
+                            repeatIcon = "🔂";
+                            break;
+                    }
+                    
+                    if (repeatMessage) {
+                        showStatusNotification(repeatIcon, repeatMessage);
+                    }
+                }
+                
+                if (data.currentTime !== prevCurrentTime) {
+                    updateProgressBarDisplay();
+                }
+                
+                // Re-render playlists if we're on library screen and playlist count changed
+                if (appState.hasInitialized && appState.currentScreen === 'library') {
+                    renderPlaylists();
+                }
+                
+                // Update controls after liked songs change
+                if (data.likedSongs !== undefined) {
+                    setTimeout(() => {
+                        updateControls();
+                    }, 100);
+                }
+                
+                if (data.currentViewSongs) {
+                    let parsedSongs = [];
+                    if (typeof data.currentViewSongs === 'string') {
+                        parsedSongs = parseGameJSON(data.currentViewSongs);
+                    } else if (Array.isArray(data.currentViewSongs)) {
+                        parsedSongs = data.currentViewSongs;
+                    }
+                    
+                    if (parsedSongs.length > 0 && JSON.stringify(parsedSongs) !== JSON.stringify(appState.currentViewSongs)) {
+                        appState.currentViewSongs = parsedSongs;
+                        if (appState.currentScreen === 'songs') {
+                            renderSongs();
+                        }
+                    }
+                }
+                
+                updateNowPlaying();
+                
+            } else if (event.data.type === 'navigation') {
+                handleNavigation(event.data.direction);
+            } else if (event.data.type === 'updateSidebarData') {
+                if (event.data.recentApps && Array.isArray(event.data.recentApps)) {
+                    appState.recentApps = event.data.recentApps.slice(0, 3);
+                    updateRecentAppsDisplay();
+                }
+                if (event.data.iconTheme) {
+                    appState.iconTheme = event.data.iconTheme;
+                    updateRecentAppsDisplay();
+                }
+            }
+        });
+
+        updateTime();
+        updateSignal();
+        updateRecentAppsDisplay();
+        updateNowPlaying();
+        updateAllSelections();
+        
+        setInterval(updateTime, 60000);
+        setInterval(updateSignal, 3000);
+
+        console.log("Spotify app initialized with smart opening logic!");
+    </script>
+</body>
+</html>
